@@ -1,6 +1,7 @@
-from datetime import datetime
-from typing import List
+# main.py
+# 서버 시작과 API들을 관리하는 파일?
 
+from typing import List
 from fastapi import Depends, FastAPI, HTTPException
 from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -37,12 +38,12 @@ def show_user(user_id: int, db: Session=Depends(get_db)):
 
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
-def create_user(user: schemas.CreateUser, db: Session=Depends(get_db)):
+def create_user(user: schemas.UserCreate, db: Session=Depends(get_db)):
     return crud.create_user(db, user=user)
 
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/questions', response_model=schemas.Question)
-def create_question(question: schemas.CreateQuestion, db: Session=Depends(get_db)):
+def create_question(question: schemas.QuestionCreate, db: Session=Depends(get_db)):
     return crud.create_question(db, question=question)
 
 # 나중에 참고용 으로 일단 주석처리
