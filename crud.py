@@ -1,0 +1,23 @@
+from sqlalchemy.orm import Session
+from . import models, schemas
+
+def get_questions_by_userId(db:Session, user_id: int):
+    return db.query(models.Question).first(models.Question.user_id == user_id).all()
+
+def get_user(db:Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def create_user(db:Session, user:schemas.UserCreate):
+    db_user = models.User(insta_id=user.insta_id)
+    db.add(user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def create_question(db:Session, question: schemas.QuestionCreate):
+    db_question = models.Question(content = question.content, user_id = question.user_id, type='n',
+                                  expired=False)
+    db.add(db_question)
+    db.commit()
+    db.refresh(db_question)
+    return db_question

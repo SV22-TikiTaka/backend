@@ -15,7 +15,7 @@ class User(BaseModel):
     class Config:
         orm_mode = True
 
-class CreateUser(BaseModel):
+class UserCreate(BaseModel):
     insta_id: str
 
     class Config:
@@ -34,7 +34,7 @@ class Question(BaseModel):
     class Config:
         orm_mode = True
 
-class CreateQuestion(BaseModel):
+class QuestionCreate(BaseModel):
     content: str
     user_id: int
     type: str
