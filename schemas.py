@@ -6,7 +6,7 @@ from sqlite3 import Timestamp
 
 from pydantic import BaseModel # 객체 타입설정
 
-# DB 에 넣을 때
+
 class User(BaseModel):
     id: int # 자동생성
     insta_id: str

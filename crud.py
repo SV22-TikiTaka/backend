@@ -1,5 +1,9 @@
 # crud.py
+<<<<<<< Updated upstream
 # db에 직접 접근하여 create, read, update, delete 하는 함수를 관리하는 파일
+=======
+# db crud 관련 함수 작성하는 파일
+>>>>>>> Stashed changes
 
 from sqlalchemy.orm import Session
 import models, schemas
