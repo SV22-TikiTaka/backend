@@ -29,7 +29,7 @@ def main():
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
 @app.get('/api/v1/questions/{user_id}', response_model=List[schemas.Question])
 def show_questions(user_id: int, db: Session=Depends(get_db)):
-    return crud.get_questions_by_userId(db, user_id=user_id)
+    return crud.get_questions_by_userid(db, user_id=user_id)
 
 # user_id를 path variable로 받아서 해당 user의 정보를 반환
 @app.get('/api/v1/users/{user_id}', response_model=schemas.User)
