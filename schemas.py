@@ -57,6 +57,8 @@ class RandomQuestion(BaseModel):
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
 
+    class Config:
+        orm_mode = True
 
 class BaseTextComment(BaseModel):
     content: str
@@ -71,6 +73,8 @@ class TextComment(BaseTextComment):
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
 
+    class Config:
+        orm_mode = True
 
 class BaseSoundComment(BaseModel):
     url: str
@@ -85,6 +89,8 @@ class SoundComment(BaseSoundComment):
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
 
+    class Config:
+        orm_mode = True
 
 class BaseVoteComment(BaseModel):
     num: int
@@ -100,3 +106,6 @@ class VoteComment(BaseVoteComment):
     count: int
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
+
+    class Config:
+        orm_mode = True
