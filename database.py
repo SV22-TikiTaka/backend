@@ -12,9 +12,9 @@ import os
 load_dotenv()
 
 # DB 주소
-DB_URL = (f"mysql+pymysql://{os.environ.get('DB_USER')}" +
-          f":{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}" +
-          f":{os.environ.get('DB_PORT')}/{os.environ.get('DB_SCHEMA')}?charset=utf8")
+DB_URL = (f"mysql+pymysql://{os.getenv('MYSQL_USER')}" +
+          f":{os.getenv('MYSQL_ROOT_PASSWORD')}@{os.getenv('MYSQL_HOST')}" +
+          f":{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DATABASE')}?charset=utf8")
 
 # sqlalchemy 엔진, main.py에서 사용
 engine = create_engine(DB_URL, encoding = 'utf8')
