@@ -42,19 +42,23 @@ def main():
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
 @app.get('/api/v1/users/{user_id}/questions', response_model=List[schemas.Question], status_code=200)
 def show_questions(user_id: int, db: Session = Depends(get_db)):
+    user = crud.get_user(db, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="user is not found")
+
     questions = crud.get_questions_by_userid(db, user_id=user_id)
-    if len(questions) == 0:
-        raise HTTPException(status_code=404, detail="questions are not found")
-    return crud.get_questions_by_userid(db, user_id=user_id)
+    return questions
 
 
 # D-2
 # question_id를 query parameter로 받아서 해당 question에 해당하는 comment들을 반환
 @app.get('/api/v1/users/comments', response_model=List[schemas.Comment], status_code=200)
 def show_comments(question_id: int, db: Session = Depends(get_db)):
+    question = crud.get_question(db, question_id=question_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail="question is not found")
+
     comments = crud.get_comments_by_questionid(db, question_id=question_id)
-    if len(comments) == 0:
-        raise HTTPException(status_code=404, detail="comments are not found")
     comments.sort(key=lambda x:x.created_at)
     return comments
 
