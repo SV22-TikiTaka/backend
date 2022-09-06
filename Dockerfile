@@ -18,9 +18,8 @@ COPY . /backend/
 
 # COPY wait-for-it.sh wait-for-it.sh
 
-# RUN chmod +x ./wait-for-it.sh
-# EXPOSE 8000
-
+COPY wait-for-it.sh wait-for-it.sh
+RUN chmod +x wait-for-it.sh
 CMD ./wait-for-it.sh db:3306 -s -t 30 -- uvicorn --host=0.0.0.0 --port 8000 main:app --reload
 # CMD uvicorn --host=0.0.0.0 --port 8000 main:app --reload
 #./wait-for-it.sh localhost:3306 -s -t 30 -- 
