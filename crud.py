@@ -9,9 +9,16 @@ def get_questions_by_userid(db: Session, user_id: int):
     return db.query(models.Question).filter(models.Question.user_id == user_id).all()
 
 
+def get_comments_by_questionid(db: Session, question_id: int):
+    return db.query(models.Comment).filter(models.Comment.question_id == question_id).all()
+
+
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
+
+def get_question(db:Session, question_id: int):
+    return db.query(models.Question).filter(models.Question.id == question_id).first()
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(insta_id=user.insta_id)
