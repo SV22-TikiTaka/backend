@@ -43,26 +43,16 @@ class Question(Base):
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
-    question_text_comment = relationship("TextComment")
-    question_sound_comment = relationship("SoundComment")
+    question_comment = relationship("Comment")
     question_vote_comment = relationship("VoteComment")
 
 
-class TextComment(Base):
-    __tablename__ = "text_comment"
+class Comment(Base):
+    __tablename__ = "comment"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(String(500))
-    question_id = Column(Integer, ForeignKey("question.id"))
-    created_at = Column(TIMESTAMP, default=Timestamp.now())
-    updated_at = Column(TIMESTAMP, default=Timestamp.now())
-
-
-class SoundComment(Base):
-    __tablename__ = "sound_comment"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    url = Column(String(100))
+    type = Column(String(1))
+    content = Column(String(100))
     question_id = Column(Integer, ForeignKey("question.id"))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
