@@ -7,10 +7,21 @@ from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
 import models, schemas, crud
 from database import SessionLocal, engine
+from starlette.middleware.cors import CORSMiddleware
+
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # DB
 def get_db():
@@ -20,30 +31,49 @@ def get_db():
     finally:
         db.close()
 
+
 # 접속시 자동으로 문서페이지로 이동
 @app.get("/")
 def main():
     return RedirectResponse(url="/docs/")
 
-# API형식은 일단 임시로 짠거라 나중에 바꾸면 될거같아요
+
+# D-6
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
-@app.get('/api/v1/questions/{user_id}', response_model=List[schemas.Question])
-def show_questions(user_id: int, db: Session=Depends(get_db)):
+@app.get('/api/v1/users/{user_id}/questions', response_model=List[schemas.Question], status_code=200)
+def show_questions(user_id: int, db: Session = Depends(get_db)):
+    questions = crud.get_questions_by_userid(db, user_id=user_id)
+    if len(questions) == 0:
+        raise HTTPException(status_code=404, detail="questions are not found")
     return crud.get_questions_by_userid(db, user_id=user_id)
+
+
+# D-2
+# question_id를 query parameter로 받아서 해당 question에 해당하는 comment들을 반환
+@app.get('/api/v1/users/comments', response_model=List[schemas.Comment], status_code=200)
+def show_comments(question_id: int, db: Session = Depends(get_db)):
+    comments = crud.get_comments_by_questionid(db, question_id=question_id)
+    if len(comments) == 0:
+        raise HTTPException(status_code=404, detail="comments are not found")
+    comments.sort(key=lambda x:x.created_at)
+    return comments
+
 
 # user_id를 path variable로 받아서 해당 user의 정보를 반환
 @app.get('/api/v1/users/{user_id}', response_model=schemas.User)
-def show_user(user_id: int, db: Session=Depends(get_db)):
+def show_user(user_id: int, db: Session = Depends(get_db)):
     return crud.get_user(db, user_id=user_id)
+
 
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session=Depends(get_db)):
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db, user=user)
+
 
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/questions', response_model=schemas.Question)
-def create_question(question: schemas.QuestionCreate, db: Session=Depends(get_db)):
+def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
     return crud.create_question(db, question=question)
 
 # 나중에 참고용 으로 일단 주석처리
