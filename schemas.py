@@ -60,15 +60,17 @@ class RandomQuestion(BaseModel):
     class Config:
         orm_mode = True
 
-class BaseTextComment(BaseModel):
+
+class BaseComment(BaseModel):
     content: str
+    type: str
 
 
-class TextCommentCreate(BaseTextComment):
+class CommentCreate(BaseComment):
     question_id: int
 
 
-class TextComment(BaseTextComment):
+class Comment(BaseComment):
     id: int
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
@@ -76,25 +78,10 @@ class TextComment(BaseTextComment):
     class Config:
         orm_mode = True
 
-class BaseSoundComment(BaseModel):
-    url: str
-
-
-class SoundCommentCreate(BaseSoundComment):
-    question_id: int
-
-
-class SoundComment(BaseSoundComment):
-    id: int
-    created_at: Timestamp  # db 넣을 때 생성
-    updated_at: Timestamp  # db 넣을 때 생성
-
-    class Config:
-        orm_mode = True
 
 class BaseVoteComment(BaseModel):
     num: int
-    content: String
+    content: str
 
 
 class VoteCommentCreate(BaseVoteComment):
