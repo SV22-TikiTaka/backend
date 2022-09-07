@@ -80,7 +80,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
     return crud.create_question(db, question=question)
 
-
+# B-8
 # 질문 공유를 위한 url을 생성
 @app.get('/api/v1/questions/url', response_model=str)
 def get_question(user_id: int, question_id: int, db: Session = Depends(get_db)):

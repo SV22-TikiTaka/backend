@@ -17,10 +17,6 @@ def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 
-def get_insta_id_by_userid(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first().insta_id
-
-
 def get_question(db:Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
