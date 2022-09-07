@@ -80,6 +80,15 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
     return crud.create_question(db, question=question)
 
+# B-8
+# 질문 공유를 위한 url을 생성
+@app.get('/api/v1/questions/url', response_model=str)
+def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_db)):
+    insta_id = crud.get_user(db, user_id=user_id).insta_id
+    return f'http://localhost:3000/{insta_id}/{question_id}'
+
+
+
 # 나중에 참고용 으로 일단 주석처리
 # @app.put('/users/{user_id}', response_model=schemas.User)
 # def update_users(user_id: int, enter: schemas.UserUpdate, db: Session=Depends(get_db)):
