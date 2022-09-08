@@ -9,7 +9,6 @@ import models, schemas, crud
 from database import SessionLocal, engine
 from starlette.middleware.cors import CORSMiddleware
 
-
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -59,7 +58,7 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="question is not found")
 
     comments = crud.get_comments_by_questionid(db, question_id=question_id)
-    comments.sort(key=lambda x:x.created_at)
+    comments.sort(key=lambda x: x.created_at)
     return comments
 
 
@@ -67,6 +66,13 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
 @app.get('/api/v1/users/{user_id}', response_model=schemas.User)
 def show_user(user_id: int, db: Session = Depends(get_db)):
     return crud.get_user(db, user_id=user_id)
+
+
+# C-2
+# 링크 접속 시 질문 내용 반환
+@app.get('/api/v1/questions', response_model=schemas.Question)
+def get_question(question_id: int, db: Session = Depends(get_db)):
+    return crud.get_question(db, question_id=question_id)
 
 
 # user 생성에 필요한 정보를 보내면 DB에 저장
@@ -80,6 +86,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
     return crud.create_question(db, question=question)
 
+
 # B-8
 # 질문 공유를 위한 url을 생성
 @app.get('/api/v1/questions/url', response_model=str)
@@ -87,12 +94,12 @@ def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_d
     insta_id = crud.get_user(db, user_id=user_id).insta_id
     return f'http://localhost:3000/{insta_id}/{question_id}'
 
+
 # C-5
 # 텍스트 답변 저장
-@app.post('/api/v1/comments/text', response_model = schemas.Comment)
+@app.post('/api/v1/comments/text', response_model=schemas.Comment)
 def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
-    return crud.create_comment(db, comment = comment)
-
+    return crud.create_comment(db, comment=comment)
 
 # 나중에 참고용 으로 일단 주석처리
 # @app.put('/users/{user_id}', response_model=schemas.User)
