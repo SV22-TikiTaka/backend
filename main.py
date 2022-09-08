@@ -1,8 +1,10 @@
 # main.py
 # 서버 시작과 API들을 관리하는 파일?
-
+import os, shutil, boto3
 from typing import List
-from fastapi import Depends, FastAPI, HTTPException
+
+from botocore.exceptions import ClientError
+from fastapi import Depends, FastAPI, HTTPException, UploadFile, File, Form
 from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
 import models, schemas, crud
@@ -21,6 +23,31 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+client_s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_KEY')
+)
+
+"""
+upload file to S3
+"""
+
+
+def upload_file(location, file):
+    try:
+        client_s3.upload_file(
+            location,
+            os.getenv('AWS_S3_BUCKET_NAME'),
+            file,
+            ExtraArgs={'ContentType': 'audio/wav'}
+        )
+    except ClientError as e:
+        print(f'Credential error => {e}')
+    except Exception as e:
+        print(f"Another error => {e}")
 
 
 # DB
@@ -61,6 +88,16 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
     comments = crud.get_comments_by_questionid(db, question_id=question_id)
     comments.sort(key=lambda x:x.created_at)
     return comments
+
+
+@app.post('/api/v1/comments/voice', status_code=201)
+def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Session = Depends(get_db)):
+    if not os.path.exists('temp'):
+        os.mkdir('temp')
+    file_path = "temp/" + str(question_id) + ".wav"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    upload_file(file_path, str(question_id))
 
 
 # user_id를 path variable로 받아서 해당 user의 정보를 반환
