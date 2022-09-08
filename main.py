@@ -87,6 +87,8 @@ def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_d
     insta_id = crud.get_user(db, user_id=user_id).insta_id
     return f'http://localhost:3000/{insta_id}/{question_id}'
 
+# C-5
+# 텍스트 답변 저장
 @app.post('/api/v1/comments/text', response_model = schemas.Comment)
 def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
     return crud.create_comment(db, comment = comment)

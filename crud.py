@@ -35,6 +35,7 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     db.refresh(db_question)
     return db_question
 
+
 def create_comment(db: Session, comment: schemas.CommentCreate):
     db_comment = models.Comment(content = comment.content, question_id = comment.question_id, type = "n")
     db.add(db_comment)
