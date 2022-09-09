@@ -10,10 +10,7 @@ from sqlalchemy.orm import Session
 import models, schemas, crud
 from database import SessionLocal, engine
 from starlette.middleware.cors import CORSMiddleware
-<<<<<<< dev
-=======
 from voice_alteration import voice_alteration
->>>>>>> feat: voice_alteration.py 추가, 음성 답변 저장 기능 구현(local)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -161,7 +158,6 @@ def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_d
     insta_id = crud.get_user(db, user_id=user_id).insta_id
     return f'http://localhost:3000/{insta_id}/{question_id}'
 
-<<<<<<< dev
 
 # C-5
 # 텍스트 답변 저장
@@ -173,8 +169,7 @@ def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="question is not found")
     return crud.create_comment(db, comment=comment)
 
-=======
->>>>>>> feat: voice_alteration.py 추가, 음성 답변 저장 기능 구현(local)
+
 # 나중에 참고용 으로 일단 주석처리
 # @app.put('/users/{user_id}', response_model=schemas.User)
 # def update_users(user_id: int, enter: schemas.UserUpdate, db: Session=Depends(get_db)):
