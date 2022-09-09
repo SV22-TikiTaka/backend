@@ -17,8 +17,9 @@ def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 
-def get_question(db:Session, question_id: int):
+def get_question(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
+
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(insta_id=user.insta_id)
@@ -34,3 +35,24 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     db.commit()
     db.refresh(db_question)
     return db_question
+
+
+def create_sound_comment(db: Session, question_id: int):
+    db_comment = models.Comment(content="", type='s', question_id=question_id)
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
+
+
+def update_sound_comment(db: Session, comment_id: int, content: str):
+    db_voice_comment = db.query(models.Comment).get(comment_id)
+    # update todo item with the given task (if an item with the given id was found)
+    if db_voice_comment:
+        db_voice_comment.content = content
+        db.commit()
+        db.refresh(db_voice_comment)
+    # check if todo item with given id exists. If not, raise exception and return 404 not found response
+    # raise HTTPException(status_code=404, detail=f"todo item with id {id} not found")
+
+    return db_voice_comment
