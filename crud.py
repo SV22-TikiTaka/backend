@@ -20,6 +20,10 @@ def get_user(db: Session, user_id: int):
 def get_question(db:Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
+def get_questionid(db:Session, question_id: int):
+    return db.query(models.Question).filter(models.Question.id == question_id).first()
+
+
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(insta_id=user.insta_id)
     db.add(db_user)
@@ -34,3 +38,10 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     db.commit()
     db.refresh(db_question)
     return db_question
+
+def create_comment(db: Session, comment: schemas.CommentCreate):
+    db_comment = models.Comment(content = comment.content, question_id = comment.question_id, type = "n")
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
