@@ -72,7 +72,15 @@ def show_user(user_id: int, db: Session = Depends(get_db)):
 # 링크 접속 시 질문 내용 반환
 @app.get('/api/v1/questions', response_model=schemas.Question)
 def get_question(question_id: int, db: Session = Depends(get_db)):
+    if crud.get_question(db, question_id=question_id) is None:
+        raise HTTPException(status_code=404, detail="question is not found")
     return crud.get_question(db, question_id=question_id)
+
+# C-3
+# 링크 접속 시 투표 내용 반환
+# @app.get('/api/v1/questions', response_model=schemas.Question)
+# def get_vote_question(question_type: str, db: Session = Depends(get_db)):
+#     return crud.get_vote_question(db, question_type=question_type)
 
 
 # user 생성에 필요한 정보를 보내면 DB에 저장
@@ -99,6 +107,10 @@ def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_d
 # 텍스트 답변 저장
 @app.post('/api/v1/comments/text', response_model=schemas.Comment)
 def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
+    if len(comment.content) > 100:
+        raise HTTPException(status_code=404, detail="글자수 초과")
+    elif crud.get_question(db, question_id=comment.question_id) is None:
+        raise HTTPException(status_code=404, detail="question is not found")
     return crud.create_comment(db, comment=comment)
 
 # 나중에 참고용 으로 일단 주석처리
