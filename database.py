@@ -16,6 +16,8 @@ DB_URL = (f"mysql+pymysql://{os.getenv('MYSQL_USER')}" +
           f":{os.getenv('MYSQL_ROOT_PASSWORD')}@{os.getenv('MYSQL_HOST')}" +
           f":{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DATABASE')}?charset=utf8")
 
+
+print(DB_URL)
 # sqlalchemy 엔진, main.py에서 사용
 engine = create_engine(DB_URL, encoding = 'utf8')
 
@@ -23,4 +25,4 @@ engine = create_engine(DB_URL, encoding = 'utf8')
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # DB모델이나 클래스를 만들기 위해 선언한 클래스(후에 상속해서 사용)
-Base = declarative_base();
+Base = declarative_base()

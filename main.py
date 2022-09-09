@@ -62,7 +62,6 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
     comments.sort(key=lambda x:x.created_at)
     return comments
 
-
 # user_id를 path variable로 받아서 해당 user의 정보를 반환
 @app.get('/api/v1/users/{user_id}', response_model=schemas.User)
 def show_user(user_id: int, db: Session = Depends(get_db)):
@@ -74,11 +73,22 @@ def show_user(user_id: int, db: Session = Depends(get_db)):
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db, user=user)
 
-
+# B-9
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/questions', response_model=schemas.Question)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
     return crud.create_question(db, question=question)
+
+# B-10
+# 투표 질문 저장
+@app.post('/api/v1/questions/vote/{userId}')
+def create_vote_question(vote: schemas.VoteCreate, db: Session = Depends(get_db)):
+    created_question = crud.create_vote_question(db, vote=vote) 
+    created_option = crud.create_vote_comment(db, created_question.id, vote.option)
+    
+    return {"question_id" : created_question.id, "option" : created_option}
+
+
 
 # 나중에 참고용 으로 일단 주석처리
 # @app.put('/users/{user_id}', response_model=schemas.User)

@@ -70,6 +70,7 @@ class VoteComment(Base):
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
 
+
 class RandomQuestion(Base):
     __tablename__ = "random_question"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -77,3 +78,4 @@ class RandomQuestion(Base):
     type = Column(String(1))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
+

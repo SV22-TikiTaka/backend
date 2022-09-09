@@ -1,8 +1,10 @@
 # schemas.py
 # 테이블의 타입을 설정하는 파일
 
+from ast import Str
+from re import S
 from sqlite3 import Timestamp
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel  # 객체 타입설정
 
@@ -61,13 +63,16 @@ class RandomQuestion(BaseModel):
         orm_mode = True
 
 
+class VoteCreate(QuestionCreate):
+    option: List[str]
+
 class BaseComment(BaseModel):
     content: str
     type: str
 
 
 class CommentCreate(BaseComment):
-    question_id: int
+    pass
 
 
 class Comment(BaseComment):
@@ -79,16 +84,8 @@ class Comment(BaseComment):
         orm_mode = True
 
 
-class BaseVoteComment(BaseModel):
-    num: int
-    content: str
-
-
-class VoteCommentCreate(BaseVoteComment):
+class VoteComment(BaseModel):
     question_id: int
-
-
-class VoteComment(BaseVoteComment):
     id: int
     count: int
     created_at: Timestamp  # db 넣을 때 생성
@@ -96,3 +93,13 @@ class VoteComment(BaseVoteComment):
 
     class Config:
         orm_mode = True
+
+# class VoteOption(BaseModel):
+#     question_id: int
+#     option = List[str]
+
+#     class Config:
+#         orm_mode = True
+#         arbitrary_types_allowed = True
+
+
