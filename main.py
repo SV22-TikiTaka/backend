@@ -3,14 +3,19 @@
 import os, shutil, boto3
 from typing import List
 
+from fastapi import Depends, FastAPI, HTTPException
 from botocore.exceptions import ClientError
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, File, Form
 from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
-import models, schemas, crud
-from database import SessionLocal, engine
 from starlette.middleware.cors import CORSMiddleware
+
+import crud
+import models
+import schemas
+from database import SessionLocal, engine
 from voice_alteration import voice_alteration
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -88,7 +93,6 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
     comments.sort(key=lambda x: x.created_at)
     return comments
 
-
 # C-6
 # .wav 파일과 question_id를 form 데이터로 받아 해당 파일 음성 변조해 s3 bucket에 파일 저장,  url도 db에 저장
 @app.post('/api/v1/comments/voice', status_code=201)
@@ -156,11 +160,25 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db, user=user)
 
-
+# B-9
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/questions', response_model=schemas.Question)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
     return crud.create_question(db, question=question)
+
+
+# B-10
+# 투표 질문 저장
+@app.post('/api/v1/questions/vote/{userId}')
+def create_vote_question(question: schemas.QuestionCreate, option:List[str], db: Session = Depends(get_db)):
+    
+    created_question = crud.create_question(db, question=question) 
+    created_option = crud.create_vote_comment(db, created_question.id, option)
+    if(created_question == None):
+        raise HTTPException(status_code=404, detail="question creation failed")
+    if(len(created_option) < 1):
+        raise HTTPException(status_code=404, detail="option creation failed")
+    return {"question_id" : created_question.id, "option" : created_option}
 
 
 # B-8
@@ -180,7 +198,6 @@ def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db))
     elif crud.get_question(db, question_id=comment.question_id) is None:
         raise HTTPException(status_code=404, detail="question is not found")
     return crud.create_comment(db, comment=comment)
-
 
 
 # 나중에 참고용 으로 일단 주석처리
