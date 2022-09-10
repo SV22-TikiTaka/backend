@@ -13,6 +13,10 @@ def get_comments_by_questionid(db: Session, question_id: int):
     return db.query(models.Comment).filter(models.Comment.question_id == question_id).all()
 
 
+def get_comment(db: Session, comment_id: int):
+    return db.query(models.Comment).get(comment_id)
+
+
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 

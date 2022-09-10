@@ -89,6 +89,8 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
     return comments
 
 
+# C-6
+# .wav 파일과 question_id를 form 데이터로 받아 해당 파일 음성 변조해 s3 bucket에 파일 저장,  url도 db에 저장
 @app.post('/api/v1/comments/voice', status_code=201)
 def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Session = Depends(get_db)):
     if crud.get_question(db, question_id=question_id) is None:
@@ -115,6 +117,16 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
     # url update
     comment = crud.update_sound_comment(db, comment_id=comment.id,
                                         content=f"https://tikitaka-s3.s3.ap-northeast-2.amazonaws.com/{comment.id}")
+    return comment
+
+
+# D-3
+# comment_id를 path variable로 받아 해당 comment를 반환
+@app.get('/api/v1/comments/{comment_id}', response_model=schemas.Comment, status_code=200)
+def show_comment(comment_id: int, db: Session = Depends(get_db)):
+    comment = crud.get_comment(db, comment_id=comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="comment is not found")
     return comment
 
 
