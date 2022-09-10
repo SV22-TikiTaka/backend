@@ -83,11 +83,14 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # 투표 질문 저장
 @app.post('/api/v1/questions/vote/{userId}')
 def create_vote_question(vote: schemas.VoteCreate, db: Session = Depends(get_db)):
+    
     created_question = crud.create_vote_question(db, vote=vote) 
     created_option = crud.create_vote_comment(db, created_question.id, vote.option)
-    
+    if(created_question == None):
+        raise HTTPException(status_code=404, detail="question not found")
+    if(created_option == None):
+        raise HTTPException(status_code=404, detail="option not found")
     return {"question_id" : created_question.id, "option" : created_option}
-
 
 
 # 나중에 참고용 으로 일단 주석처리
