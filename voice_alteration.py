@@ -1,8 +1,8 @@
 from pydub import AudioSegment
 import os
 
-ffmpeg_path = "/venv/bin"
-os.environ["PATH"] += os.pathsep + ffmpeg_path
+# ffmpeg_path = "/venv/bin"
+# os.environ["PATH"] += os.pathsep + ffmpeg_path
 
 
 def voice_alteration(filepath: str, comment_id: int):
