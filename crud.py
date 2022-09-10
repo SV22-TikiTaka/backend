@@ -1,7 +1,6 @@
 # crud.py
 # db에 직접 접근하여 create, read, update, delete 하는 함수를 관리하는 파일
 
-from datetime import datetime
 from re import L
 from typing import List
 from venv import create
@@ -42,7 +41,7 @@ def create_vote_question(db: Session, vote: schemas.VoteCreate):
 
 # 투표 질문 선택지 생성
 def create_vote_comment(db: Session, question_id: int, option: List[str]):
-    now = datetime.now()
+    now = now()
     created_option = []
     for i in range(0, len(option)): #옵션의 개수만큼 vote comment에 저장
         db_vote_comment = models.VoteComment(num=i+1, content = option[i], count = 0
