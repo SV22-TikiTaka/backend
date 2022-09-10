@@ -2,13 +2,16 @@
 # 서버 시작과 API들을 관리하는 파일?
 
 from typing import List
-from fastapi import Depends, FastAPI, HTTPException
-from starlette.responses import RedirectResponse
-from sqlalchemy.orm import Session
-import models, schemas, crud
-from database import SessionLocal, engine
-from starlette.middleware.cors import CORSMiddleware
 
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy.orm import Session
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import RedirectResponse
+
+import crud
+import models
+import schemas
+from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -82,12 +85,12 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # B-10
 # 투표 질문 저장
 @app.post('/api/v1/questions/vote/{userId}')
-def create_vote_question(vote: schemas.VoteCreate, db: Session = Depends(get_db)):
+def create_vote_question(question: schemas.QuestionCreate, option:List[str], db: Session = Depends(get_db)):
     
-    created_question = crud.create_vote_question(db, vote=vote) 
-    created_option = crud.create_vote_comment(db, created_question.id, vote.option)
+    created_question = crud.create_question(db, question=question) 
+    created_option = crud.create_vote_comment(db, created_question.id, option)
     if(created_question == None):
-        raise HTTPException(status_code=404, detail="question not found")
+        raise HTTPException(status_code=404, detail="question creation failed")
     if(len(created_option) < 1):
         raise HTTPException(status_code=404, detail="option creation failed")
     return {"question_id" : created_question.id, "option" : created_option}
