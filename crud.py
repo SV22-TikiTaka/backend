@@ -41,11 +41,10 @@ def create_vote_question(db: Session, vote: schemas.VoteCreate):
 
 # 투표 질문 선택지 생성
 def create_vote_comment(db: Session, question_id: int, option: List[str]):
-    now = now()
     created_option = []
     for i in range(0, len(option)): #옵션의 개수만큼 vote comment에 저장
         db_vote_comment = models.VoteComment(num=i+1, content = option[i], count = 0
-            , question_id = question_id, created_at = now, updated_at = now)
+            , question_id = question_id)
         db.add(db_vote_comment)
         db.commit()
         db.refresh(db_vote_comment)

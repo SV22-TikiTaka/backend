@@ -88,8 +88,8 @@ def create_vote_question(vote: schemas.VoteCreate, db: Session = Depends(get_db)
     created_option = crud.create_vote_comment(db, created_question.id, vote.option)
     if(created_question == None):
         raise HTTPException(status_code=404, detail="question not found")
-    if(created_option == None):
-        raise HTTPException(status_code=404, detail="option not found")
+    if(len(created_option) < 1):
+        raise HTTPException(status_code=404, detail="option creation failed")
     return {"question_id" : created_question.id, "option" : created_option}
 
 
