@@ -121,8 +121,8 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
 
 
 # D-3
-# comment_id와 type을 받아서 해당 comment를 반환
-@app.get('/api/v1/comments/{comment_id}', response_model=schemas.Comment)
+# comment_id를 path variable로 받아 해당 comment를 반환
+@app.get('/api/v1/comments/{comment_id}', response_model=schemas.Comment, status_code=200)
 def show_comment(comment_id: int, db: Session = Depends(get_db)):
     comment = crud.get_comment(db, comment_id=comment_id)
     if comment is None:
