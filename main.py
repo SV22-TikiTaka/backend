@@ -140,20 +140,17 @@ def show_user(user_id: int, db: Session = Depends(get_db)):
     return crud.get_user(db, user_id=user_id)
 
 
-# C-2
-# 링크 접속 시 질문 내용 반환
-@app.get('/api/v1/questions', response_model=schemas.Question)
+# C-2, C-5
+# 링크 접속 시 질문 내용 반환, 링크 접속 시 투표 내용 반환
+@app.get('/api/v1/questions', status_code=200)
 def get_question(question_id: int, db: Session = Depends(get_db)):
-    if crud.get_question(db, question_id=question_id) is None:
+    question = crud.get_question(db, question_id=question_id)
+    if question is None:
         raise HTTPException(status_code=404, detail="question is not found")
-    return crud.get_question(db, question_id=question_id)
-
-# C-3
-# 링크 접속 시 투표 내용 반환
-# @app.get('/api/v1/questions', response_model=schemas.Question)
-# def get_vote_question(question_type: str, db: Session = Depends(get_db)):
-#     return crud.get_vote_question(db, question_type=question_type)
-
+    elif question.type == "n":
+        return crud.get_question(db, question_id=question_id)
+    elif question.type == "v":
+        return crud.get_vote_comment(db, question_id=question_id)
 
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
@@ -171,15 +168,14 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # 투표 질문 저장
 @app.post('/api/v1/questions/vote/{userId}')
 def create_vote_question(question: schemas.QuestionCreate, option:List[str], db: Session = Depends(get_db)):
-    
-    created_question = crud.create_question(db, question=question) 
+
+    created_question = crud.create_question(db, question=question)
     created_option = crud.create_vote_comment(db, created_question.id, option)
     if(created_question == None):
         raise HTTPException(status_code=404, detail="question creation failed")
     if(len(created_option) < 1):
         raise HTTPException(status_code=404, detail="option creation failed")
     return {"question_id" : created_question.id, "option" : created_option}
-
 
 # B-8
 # 질문 공유를 위한 url을 생성
@@ -191,8 +187,8 @@ def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_d
 
 # C-5
 # 텍스트 답변 저장
-@app.post('/api/v1/comments/text', response_model=schemas.Comment)
-def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
+@app.post('/api/v1/comments/text', response_model=schemas.Comment, status_code=200)
+def create_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
     if len(comment.content) > 100:
         raise HTTPException(status_code=404, detail="글자수 초과")
     elif crud.get_question(db, question_id=comment.question_id) is None:
@@ -200,7 +196,7 @@ def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db))
     return crud.create_comment(db, comment=comment)
 
 
-# 나중에 참고용 으로 일단 주석처리
+# 나중에 참고용으로 일단 주석처리
 # @app.put('/users/{user_id}', response_model=schemas.User)
 # def update_users(user_id: int, enter: schemas.UserUpdate, db: Session=Depends(get_db)):
 #     user = db.query(models.User).filter_by(id=user_id).first( )
