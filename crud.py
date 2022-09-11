@@ -28,10 +28,8 @@ def get_user(db: Session, user_id: int):
 def get_question(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
-
-def get_questionid(db:Session, question_id: int):
-    return db.query(models.Question).filter(models.Question.id == question_id).first()
-
+def get_vote_comment(db: Session, question_id: int):
+    return db.query(models.VoteComment).filter(models.VoteComment.question_id == question_id).all()
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(insta_id=user.insta_id)
@@ -64,6 +62,9 @@ def create_vote_comment(db: Session, question_id: int, option: List[str]):
         created_option.append(option[i])
         
     return created_option
+
+
+
     
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
