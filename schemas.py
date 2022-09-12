@@ -63,6 +63,7 @@ class RandomQuestion(BaseModel):
 class BaseComment(BaseModel):
     content: str
     type: str
+    question_id: int
 
 
 class CommentCreate(BaseComment):
@@ -78,7 +79,7 @@ class Comment(BaseComment):
         orm_mode = True
 
 
-class VoteComment(BaseModel):
+class VoteOption(BaseModel):
     question_id: int
     id: int
     count: int
@@ -88,12 +89,6 @@ class VoteComment(BaseModel):
     class Config:
         orm_mode = True
 
-# class VoteOption(BaseModel):
-#     question_id: int
-#     option = List[str]
 
-#     class Config:
-#         orm_mode = True
-#         arbitrary_types_allowed = True
 
 
