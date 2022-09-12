@@ -44,7 +44,7 @@ class Question(Base):
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
     question_comment = relationship("Comment")
-    question_vote_comment = relationship("VoteComment")
+    question_vote_option = relationship("VoteOption")
 
 
 class Comment(Base):
@@ -58,8 +58,8 @@ class Comment(Base):
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
 
-class VoteComment(Base):
-    __tablename__ = "vote_comment"
+class VoteOption(Base):
+    __tablename__ = "vote_option"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     num = Column(Integer)

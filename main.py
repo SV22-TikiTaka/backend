@@ -155,6 +155,13 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 #     return crud.get_vote_question(db, question_type=question_type)
 
 
+# C-4
+# 투표 답변(comment) 저장
+# @app.patch('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteComment)
+# def create_vote_comment(, db: Session = Depends(get_db))
+
+
+
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -173,7 +180,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 def create_vote_question(question: schemas.QuestionCreate, option:List[str], db: Session = Depends(get_db)):
     
     created_question = crud.create_question(db, question=question) 
-    created_option = crud.create_vote_comment(db, created_question.id, option)
+    created_option = crud.create_vote_option(db, created_question.id, option)
     if(created_question == None):
         raise HTTPException(status_code=404, detail="question creation failed")
     if(len(created_option) < 1):

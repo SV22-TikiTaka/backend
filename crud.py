@@ -53,14 +53,14 @@ def create_question(db: Session, question: schemas.QuestionCreate):
 
 
 # 투표 질문 선택지 생성
-def create_vote_comment(db: Session, question_id: int, option: List[str]):
+def create_vote_option(db: Session, question_id: int, option: List[str]):
     created_option = []
     for i in range(0, len(option)): #옵션의 개수만큼 vote comment에 저장
-        db_vote_comment = models.VoteComment(num=i+1, content = option[i], count = 0
+        db_vote_option = models.VoteOption(num=i+1, content = option[i], count = 0
             , question_id = question_id)
-        db.add(db_vote_comment)
+        db.add(db_vote_option)
         db.commit()
-        db.refresh(db_vote_comment)
+        db.refresh(db_vote_option)
         created_option.append(option[i])
         
     return created_option
@@ -68,6 +68,10 @@ def create_vote_comment(db: Session, question_id: int, option: List[str]):
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
     db_comment = models.Comment(content = comment.content, question_id = comment.question_id, type = "n")
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
 
 
 def create_sound_comment(db: Session, question_id: int):
