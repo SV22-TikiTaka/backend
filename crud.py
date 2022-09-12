@@ -9,6 +9,16 @@ import models
 import schemas
 
 
+def insert_questions(db: Session):
+    file = open("questions.txt", "r", encoding="utf-8")
+    lines = file.readlines()
+    for idx, line in enumerate(lines):
+        row = models.RandomQuestion(content=line[0], type=line[1].strip())
+        db.add(row)
+    db.commit()
+    file.close()
+
+
 def get_questions_by_userid(db: Session, user_id: int):
     return db.query(models.Question).filter(models.Question.user_id == user_id).all()
 
@@ -27,6 +37,10 @@ def get_user(db: Session, user_id: int):
 
 def get_question(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
+
+
+def get_random_question(db: Session, question_type: str):
+    return db.query(models.RandomQuestion).filter(models.RandomQuestion.type == question_type).all()
 
 
 def get_questionid(db:Session, question_id: int):
