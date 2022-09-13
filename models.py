@@ -38,8 +38,10 @@ class Question(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     content = Column(String(500))
     user_id = Column(Integer, ForeignKey("user.id"))
-    type = Column(String(1))
+    type = Column(String(20))
+    comment_type = Column(String(20))
     expired = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
@@ -51,7 +53,7 @@ class Comment(Base):
     __tablename__ = "comment"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    type = Column(String(1))
+    type = Column(String(20))
     content = Column(String(100))
     question_id = Column(Integer, ForeignKey("question.id"))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
@@ -70,12 +72,11 @@ class VoteOption(Base):
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
 
-
 class RandomQuestion(Base):
     __tablename__ = "random_question"
     id = Column(Integer, primary_key=True, autoincrement=True)
     content = Column(String(500))
-    type = Column(String(1))
+    type = Column(String(20))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 

@@ -27,6 +27,7 @@ class QuestionBase(BaseModel):
     content: str
     user_id: int
     type: str
+    comment_type = str
 
 
 class QuestionCreate(QuestionBase):
@@ -42,6 +43,7 @@ class QuestionUpdate(BaseModel):
 class Question(QuestionBase):
     id: int  # 자동 생성
     expired: bool  # 기본 값 false
+    is_deleted: bool
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
 
