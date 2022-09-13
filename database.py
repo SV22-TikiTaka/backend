@@ -12,7 +12,10 @@ import os
 load_dotenv()
 
 # DB 주소
-DB_URL = ("mysql+pymysql://root:1012@localhost:3306/tikitaka?charset=utf8")
+DB_URL = (f"mysql+pymysql://{os.getenv('MYSQL_USER')}" +
+          f":{os.getenv('MYSQL_ROOT_PASSWORD')}@{os.getenv('MYSQL_HOST')}" +
+          f":{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DATABASE')}?charset=utf8")
+
 
 
 
