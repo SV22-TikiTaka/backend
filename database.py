@@ -4,7 +4,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
+
+
 
 import os
 
@@ -12,7 +14,6 @@ import os
 load_dotenv()
 
 # DB 주소
-
 DB_URL = (f"mysql+pymysql://{os.getenv('MYSQL_USER')}" +
           f":{os.getenv('MYSQL_ROOT_PASSWORD')}@{os.getenv('MYSQL_HOST')}" +
           f":{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DATABASE')}?charset=utf8")
