@@ -128,12 +128,13 @@ def get_vote_options(db: Session, question_id: int):
     # question id가 일치하는 옵션 객체를 리스트에 넣기
 
 
-# def create_user(db: Session, user: schemas.UserCreate):
-#     db_user = models.User(insta_id=user.insta_id)
-#     db.add(db_user)
-#     db.commit()
-#     db.refresh(db_user)
-#     return db_user
+def create_user(db: Session, user: schemas.UserCreate):
+    db_user = models.User(insta_id=user.insta_id, name=user.name, \
+        follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 
 def create_question(db: Session, question: schemas.QuestionCreate):

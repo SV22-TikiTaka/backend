@@ -5,17 +5,20 @@ from sqlite3 import Timestamp
 from typing import List, Optional
 from pydantic import BaseModel  # 객체 타입설정
 
-
 class UserBase(BaseModel):
-    insta_id: str
-
+    insta_id: str # user 생성 api 호출시 자동으로 부여
+    name: str # user 생성 api 호출시 자동으로 부여
+    follower: int # user 생성 api 호출시 자동으로 부여
+    following: int # user 생성 api 호출시 자동으로 부여
+    profile_image_url: str # user 생성 api 호출시 자동으로 부여
+    pass
 
 class UserCreate(UserBase):
     pass
 
-
 class User(UserBase):
     id: int  # 자동 생성
+    is_deleted: bool # 기본값 false
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
 

@@ -205,10 +205,13 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
     return crud.update_vote_count(db, vote_comment_id)
 
 
-# # user 생성에 필요한 정보를 보내면 DB에 저장
-# @app.post('/api/v1/users', response_model=schemas.User)
-# def create_user(user: schemas.User, db: Session = Depends(get_db)):
-#     return crud.create_user(db, user=user)
+
+# user 생성에 필요한 정보를 보내면 DB에 저장
+@app.post('/api/v1/users', response_model=schemas.User)
+def create_user(db: Session = Depends(get_db)):
+    # 인스타 API 사용해서 생성자에 알맞은 값 넣어주기
+    user_create = schemas.UserCreate()
+    return crud.create_user(db, user=user_create)
 
 
 # B-9
