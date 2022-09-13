@@ -27,10 +27,11 @@ class QuestionBase(BaseModel):
     content: str
     user_id: int
     type: str
+    comment_type = str
 
 
 class QuestionCreate(QuestionBase):
-    comment_type = str
+    pass
 
 
 class QuestionUpdate(BaseModel):
