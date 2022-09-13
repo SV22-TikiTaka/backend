@@ -2,7 +2,7 @@
 # db 테이블을 구성하는 파일
 
 from sqlite3 import Timestamp
-from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, Boolean, MetaData, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, Boolean, MetaData
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -31,7 +31,7 @@ class Question(Base):
     __tablename__ = "question"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(String(500))
+    content = Column(String(40))
     user_id = Column(Integer, ForeignKey("user.id"))
     type = Column(String(20))
     comment_type = Column(String(20))
@@ -60,7 +60,7 @@ class VoteOption(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     num = Column(Integer)
-    content = Column(String(500))
+    content = Column(String(10))
     count = Column(Integer)
     question_id = Column(Integer, ForeignKey("question.id"))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
@@ -70,7 +70,7 @@ class VoteOption(Base):
 class RandomQuestion(Base):
     __tablename__ = "random_question"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(String(500))
+    content = Column(String(40))
     type = Column(String(20))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())

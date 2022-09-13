@@ -164,7 +164,7 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def create_user(user: schemas.User, db: Session = Depends(get_db)):
     return crud.create_user(db, user=user)
 
 # B-9

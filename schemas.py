@@ -6,7 +6,7 @@ from typing import Optional
 from pydantic import BaseModel  # 객체 타입설정
 
 
-class UserBase(BaseModel):
+class User(BaseModel):
     id: int  # 자동 생성
     insta_id: str # user 생성 api 호출시 자동으로 부여
     name: str # user 생성 api 호출시 자동으로 부여
@@ -16,13 +16,6 @@ class UserBase(BaseModel):
     is_deleted: bool # 기본값 
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
-
-
-class UserCreate(UserBase):
-    pass
-
-
-class User(UserBase):
 
     class Config:
         orm_mode = True
