@@ -14,22 +14,17 @@ class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    insta_id = Column(String(20), unique=True)
+    insta_id = Column(String(30), unique=True) # 인스타 id 길이 제한이 30자 라서 수정
+    name = Column(String(30))
+    follower = Column(Integer)
+    following = Column(Integer)
+    profile_image_url = Column(String(400)) # 제 url 길이가 338자라서 여유있게 했습니다
+    is_deleted = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
     # user - question 1:N 관계 설정
     user_question = relationship("Question")
-
-
-# user = Table(
-#     "user",
-#     metadata,
-#     Column('id', Integer, primary_key=True, autoincrement=True),
-#     Column('insta_id', String(20), unique=True),
-#     Column('created_date', TIMESTAMP),
-#     Column('updated_date', TIMESTAMP),
-# )
 
 
 class Question(Base):
