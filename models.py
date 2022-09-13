@@ -2,7 +2,7 @@
 # db 테이블을 구성하는 파일
 
 from sqlite3 import Timestamp
-from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, Boolean, MetaData, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, Boolean, MetaData
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -14,7 +14,12 @@ class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    insta_id = Column(String(20), unique=True)
+    insta_id = Column(String(30), unique=True) # 인스타 id 길이 제한이 30자 라서 수정
+    name = Column(String(30))
+    follower = Column(Integer)
+    following = Column(Integer)
+    profile_image_url = Column(String(400)) # 제 url 길이가 338자라서 여유있게 했습니다
+    is_deleted = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
@@ -22,21 +27,11 @@ class User(Base):
     user_question = relationship("Question")
 
 
-# user = Table(
-#     "user",
-#     metadata,
-#     Column('id', Integer, primary_key=True, autoincrement=True),
-#     Column('insta_id', String(20), unique=True),
-#     Column('created_date', TIMESTAMP),
-#     Column('updated_date', TIMESTAMP),
-# )
-
-
 class Question(Base):
     __tablename__ = "question"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(String(500))
+    content = Column(String(40))
     user_id = Column(Integer, ForeignKey("user.id"))
     type = Column(String(20))
     comment_type = Column(String(20))
@@ -65,7 +60,7 @@ class VoteOption(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     num = Column(Integer)
-    content = Column(String(500))
+    content = Column(String(10))
     count = Column(Integer)
     question_id = Column(Integer, ForeignKey("question.id"))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
@@ -75,7 +70,7 @@ class VoteOption(Base):
 class RandomQuestion(Base):
     __tablename__ = "random_question"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(String(500))
+    content = Column(String(40))
     type = Column(String(20))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())

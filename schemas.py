@@ -2,20 +2,18 @@
 # 테이블의 타입을 설정하는 파일
 
 from sqlite3 import Timestamp
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel  # 객체 타입설정
 
 
-class UserBase(BaseModel):
-    insta_id: str
-
-
-class UserCreate(UserBase):
-    pass
-
-
-class User(UserBase):
+class User(BaseModel):
     id: int  # 자동 생성
+    insta_id: str # user 생성 api 호출시 자동으로 부여
+    name: str # user 생성 api 호출시 자동으로 부여
+    follower: int # user 생성 api 호출시 자동으로 부여
+    following: int # user 생성 api 호출시 자동으로 부여
+    profile_image_url: str # user 생성 api 호출시 자동으로 부여
+    is_deleted: bool # 기본값 
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
 
