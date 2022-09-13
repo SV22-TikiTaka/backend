@@ -120,7 +120,7 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
 
     # url update
     comment = crud.update_sound_comment(db, comment_id=comment.id,
-                                        content=f"https://tikitaka-s3.s3.ap-northeast-2.amazonaws.com/{comment.id}")
+    content=f"https://tikitaka-s3.s3.ap-northeast-2.amazonaws.com/{comment.id}")
     return comment
 
 
@@ -157,14 +157,15 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 
 # C-4
 # 투표 답변(comment) 저장
-# @app.patch('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteComment)
-# def create_vote_comment(, db: Session = Depends(get_db))
+@app.patch('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteOption)
+def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
+    return crud.update_vote_count(db, vote_comment_id)
 
 
 
-# # user 생성에 필요한 정보를 보내면 DB에 저장
+# user 생성에 필요한 정보를 보내면 DB에 저장
 # @app.post('/api/v1/users', response_model=schemas.User)
-# def create_user(user: schemas.User, db: Session = Depends(get_db)):
+# def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 #     return crud.create_user(db, user=user)
 
 # B-9

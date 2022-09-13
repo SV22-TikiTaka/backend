@@ -4,6 +4,7 @@
 from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
+from datetime import datetime
 
 import models
 import schemas
@@ -33,12 +34,12 @@ def get_questionid(db:Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
 
-def create_user(db: Session, user: schemas.UserCreate):
-    db_user = models.User(insta_id=user.insta_id)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+# def create_user(db: Session, user: schemas.UserCreate):
+#     db_user = models.User(insta_id=user.insta_id)
+#     db.add(db_user)
+#     db.commit()
+#     db.refresh(db_user)
+#     return db_user
 
 
 def create_question(db: Session, question: schemas.QuestionCreate):
@@ -72,6 +73,18 @@ def create_comment(db: Session, comment: schemas.CommentCreate):
     db.commit()
     db.refresh(db_comment)
     return db_comment
+
+
+def update_vote_count(db: Session, vote_option_id: int):
+    db_vote_option = db.query(models.VoteOption).filter_by(id=vote_option_id).first()
+    if db_vote_option == None:
+        raise HTTPException(status_code=404, detail="vote_option not found")
+    db_vote_option.count += 1
+    db_vote_option.updated_at = datetime.now()
+    db.add(db_vote_option)
+    db.commit()
+    db.refresh(db_vote_option)
+    return db_vote_option
 
 
 def create_sound_comment(db: Session, question_id: int):
