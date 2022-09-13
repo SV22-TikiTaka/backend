@@ -11,7 +11,6 @@ class UserBase(BaseModel):
     follower: int # user 생성 api 호출시 자동으로 부여
     following: int # user 생성 api 호출시 자동으로 부여
     profile_image_url: str # user 생성 api 호출시 자동으로 부여
-    pass
 
 class UserCreate(UserBase):
     pass

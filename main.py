@@ -1,10 +1,9 @@
 # main.py
 # 서버 시작과 API들을 관리하는 파일?
-import os, shutil, boto3
-import random
-import datetime
+import os, shutil, boto3, requests, random
 from typing import List
 
+from dotenv import load_dotenv
 from botocore.exceptions import ClientError
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, Form
 from starlette.responses import RedirectResponse
@@ -22,6 +21,9 @@ import crud
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# 환경변수 로드
+load_dotenv()
 
 app.add_middleware(
     CORSMiddleware,
@@ -77,6 +79,86 @@ async def app_startup():
 def main():
     return RedirectResponse(url="/docs/")
 
+
+# ----------------------------------------------------
+# 인스타 로그인 및 프로필 정보 가져오기
+
+app_id = os.getenv('INSTA_APP_ID')
+secret_id = os.getenv('INSTA_APP_SECRET_ID')
+redirect_url = "https://localhost:8000/insta"
+authorize_url = f"https://api.instagram.com/oauth/authorize?client_id=\
+    {app_id}&redirect_uri={redirect_url}&scope=user_profile,user_media&response_type=code"
+get_short_token_url = "https://api.instagram.com/oauth/access_token"
+get_user_name_url = "https://graph.instagram.com/me?fields=username&access_token="
+get_user_info_url = "https://i.instagram.com/api/v1/users/web_profile_info/?username="
+
+# 인스타 연동 페이지로 이동
+@app.get("/api/v1/authorize")
+async def go_to_authorize_page():
+    return RedirectResponse(url=authorize_url)
+
+
+# 인스타 연동 성공시 리디렉션되는 API, 발행된 code로 단기 토큰 얻기
+@app.get("/insta")
+def get_insta_code(code: str):
+    if code is None:
+        raise HTTPException(status_code=404, detail="code is not found")
+    short_token = get_short_token(code)
+    print(short_token)
+    user_info = get_user_info(short_token)
+    print(user_info)
+    # user_create_data = schemas.UserCreate(insta_id=user_info['insta_id'], name=user_info['name'],\
+    #      follower=user_info['follower'], following=user_info['following'], \
+    #         profile_image_url=user_info['profile_image_url'])
+    res = requests.post('https://localhost:8000/api/v1/users', \
+        headers = {'Content-Type': 'application/json'}, data = user_info)
+    return res
+
+
+# 단기 토큰 얻기
+def get_short_token(code: str):
+    data = {
+        'client_id': app_id,
+        'client_secret': secret_id,
+        'code': code,
+        'grant_type': 'authorization_code',
+        'redirect_uri': redirect_url
+    }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded', 'charset': 'UTF-8', 'Accept': '*/*'}
+    try:
+        res = requests.post(get_short_token_url, headers = headers, data = data)
+        return res.json()["access_token"]
+    except Exception as ex:
+        print(ex.args)
+
+
+# 엑세스 토큰으로 user info 얻기
+def get_user_info(access_token: str):
+    try:
+        username = requests.get(get_user_name_url + access_token).json()["username"]
+        
+        # 만약 헤더 오류 시 아래 api로 대체
+        # user_info = requests.get(f'https://www.instagram.com/web/search/topsearch/?query={username}')
+        
+        # 헤더 정보에 대해서는 좀 더 알아보고 나중에 수정
+        headers = {
+            'user-agent':'Mozilla/5.0 (iPhone; CPU iPhone OS 12_3_1 like Mac OS X) \
+                AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 105.0.0.11.118 \
+                    (iPhone11,8; iOS 12_3_1; en_US; en-US; scale=2.00; 828x1792; 165586599)'
+        }
+        # username으로 user 정보 가져오는 api 호출
+        user_info = requests.get(get_user_info_url + username, headers=headers).json()['data']['user']
+
+        name = user_info['full_name']
+        follower = user_info['edge_followed_by']['count']
+        following = user_info['edge_follow']['count']
+        profile_image_url = user_info['profile_pic_url']
+        return {'insta_id': username, 'name': name, 'follower': follower, 'following': following,\
+             'profile_image_url': profile_image_url}
+    except Exception as ex:
+        print(str(ex.args))
+
+# ----------------------------------------------------
 
 # D-6
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
@@ -208,10 +290,8 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
-def create_user(db: Session = Depends(get_db)):
-    # 인스타 API 사용해서 생성자에 알맞은 값 넣어주기
-    user_create = schemas.UserCreate()
-    return crud.create_user(db, user=user_create)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db, user=user)
 
 
 # B-9
