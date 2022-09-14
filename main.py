@@ -91,6 +91,8 @@ authorize_url = f"https://api.instagram.com/oauth/authorize?client_id=\
 get_short_token_url = "https://api.instagram.com/oauth/access_token"
 get_user_name_url = "https://graph.instagram.com/me?fields=username&access_token="
 get_user_info_url = "https://i.instagram.com/api/v1/users/web_profile_info/?username="
+get_long_token_url = f"https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret={secret_id}&access_token="
+refresh_token_url = "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token="
 
 # 인스타 연동 페이지로 이동
 @app.get("/api/v1/authorize")
@@ -98,20 +100,19 @@ async def go_to_authorize_page():
     return RedirectResponse(url=authorize_url)
 
 
-# 인스타 연동 성공시 리디렉션되는 API, 발행된 code로 단기 토큰 얻기
+# 인스타 연동 성공시 리디렉션되는 API, 발행된 code로 장기 토큰 얻기
 @app.get("/insta")
 def get_insta_code(code: str, db: Session = Depends(get_db)):
     if code is None:
         raise HTTPException(status_code=404, detail="code is not found")
     short_token = get_short_token(code)
-    print(short_token)
-    user_info = get_user_info(short_token)
-    print(user_info)
+    long_token = get_long_token(short_token)['long_access_token']
+    user_info = get_user_info(long_token)
     user_create_data = schemas.UserCreate(insta_id=user_info['insta_id'], name=user_info['name'],\
          follower=user_info['follower'], following=user_info['following'], \
             profile_image_url=user_info['profile_image_url'])
-    result_info = create_user_by_user_info(user_create_data, db)
-    return result_info
+    # result_info = create_user_by_user_info(user_create_data, db)
+    # return result_info
 
 
 # 단기 토큰 얻기
@@ -127,6 +128,17 @@ def get_short_token(code: str):
     try:
         res = requests.post(get_short_token_url, headers = headers, data = data)
         return res.json()["access_token"]
+    except Exception as ex:
+        print(ex.args)
+
+
+# 장기 토큰 얻기
+def get_long_token(short_access_token: str):
+    try:
+        res = requests.get(get_long_token_url+short_access_token)
+        long_access_token = res.json()['access_token']
+        expires_in = res.json()['expires_in']
+        return {'long_access_token': long_access_token, 'expires_in': expires_in}
     except Exception as ex:
         print(ex.args)
 
@@ -156,6 +168,10 @@ def get_user_info(access_token: str):
              'profile_image_url': profile_image_url}
     except Exception as ex:
         print(str(ex.args))
+
+def get_refresh_token(long_access_token: str):
+    res = requests.get(refresh_token_url+long_access_token)
+    return res.json()['access_token']
 
 def create_user_by_user_info(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db, user=user)

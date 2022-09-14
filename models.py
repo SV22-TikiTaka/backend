@@ -18,7 +18,7 @@ class User(Base):
     name = Column(String(30))
     follower = Column(Integer)
     following = Column(Integer)
-    profile_image_url = Column(String(400)) # 제 url 길이가 338자라서 여유있게 했습니다
+    profile_image_url = Column(String(500)) # 제 url 길이가 440자라서 여유있게 했습니다
     is_deleted = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
