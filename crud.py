@@ -8,6 +8,7 @@ from fastapi import HTTPException
 import models
 import schemas
 
+question_type = ["vote", "challenge", "text", "sound"]
 
 def get_questions_by_userid(db: Session, user_id: int):
     return db.query(models.Question).filter(models.Question.user_id == user_id).all()
@@ -51,7 +52,7 @@ def get_vote_options(db: Session, question_id: int):
 
 
 def create_question(db: Session, question: schemas.QuestionCreate):
-    if(question.type in ["vote", "challenge", "text", "sound"]):
+    if(question.type in question_type):
         db_question = models.Question(content=question.content, user_id=question.user_id, type=question.type)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
