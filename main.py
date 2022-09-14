@@ -100,19 +100,18 @@ async def go_to_authorize_page():
 
 # 인스타 연동 성공시 리디렉션되는 API, 발행된 code로 단기 토큰 얻기
 @app.get("/insta")
-def get_insta_code(code: str):
+def get_insta_code(code: str, db: Session = Depends(get_db)):
     if code is None:
         raise HTTPException(status_code=404, detail="code is not found")
     short_token = get_short_token(code)
     print(short_token)
     user_info = get_user_info(short_token)
     print(user_info)
-    # user_create_data = schemas.UserCreate(insta_id=user_info['insta_id'], name=user_info['name'],\
-    #      follower=user_info['follower'], following=user_info['following'], \
-    #         profile_image_url=user_info['profile_image_url'])
-    res = requests.post('https://localhost:8000/api/v1/users', \
-        headers = {'Content-Type': 'application/json'}, data = user_info)
-    return res
+    user_create_data = schemas.UserCreate(insta_id=user_info['insta_id'], name=user_info['name'],\
+         follower=user_info['follower'], following=user_info['following'], \
+            profile_image_url=user_info['profile_image_url'])
+    result_info = create_user_by_user_info(user_create_data, db)
+    return result_info
 
 
 # 단기 토큰 얻기
@@ -157,6 +156,9 @@ def get_user_info(access_token: str):
              'profile_image_url': profile_image_url}
     except Exception as ex:
         print(str(ex.args))
+
+def create_user_by_user_info(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db, user=user)
 
 # ----------------------------------------------------
 
@@ -291,7 +293,8 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db, user=user)
+    # return crud.create_user(db, user=user)
+    return create_user_by_user_info(user, db)
 
 
 # B-9
