@@ -6,6 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
+
+
 import os
 
 # 환경변수 로드
@@ -15,8 +17,6 @@ load_dotenv()
 DB_URL = (f"mysql+pymysql://{os.getenv('MYSQL_USER')}" +
           f":{os.getenv('MYSQL_ROOT_PASSWORD')}@{os.getenv('MYSQL_HOST')}" +
           f":{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DATABASE')}?charset=utf8")
-
-
 
 
 # sqlalchemy 엔진, main.py에서 사용

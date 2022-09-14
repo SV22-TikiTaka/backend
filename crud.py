@@ -4,9 +4,20 @@
 from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
+from datetime import datetime
 
-import models
-import schemas
+import models, schemas
+
+
+def insert_questions(db: Session):
+    file = open("questions.txt", "r", encoding="utf-8")
+    lines = file.readlines()
+    for idx, line in enumerate(lines):
+        line = line.split(",")
+        row = models.RandomQuestion(content=line[0], type=line[1].strip())
+        db.add(row)
+    db.commit()
+    file.close()
 
 question_type = ["vote", "challenge", "text", "sound"]
 
@@ -30,6 +41,10 @@ def get_question(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
 
+def get_random_question(db: Session, question_type: str):
+    return db.query(models.RandomQuestion).filter(models.RandomQuestion.type == question_type).all()
+
+
 def get_questionid(db:Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
@@ -40,8 +55,6 @@ def get_vote_options(db: Session, question_id: int):
     
     #question id가 일치하는 옵션 객체를 리스트에 넣기
     
-
-
 
 # def create_user(db: Session, user: schemas.UserCreate):
 #     db_user = models.User(insta_id=user.insta_id)
@@ -61,13 +74,24 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     db.refresh(db_question)
     return db_question
 
+def update_vote_count(db: Session, vote_option_id: int):
+    db_vote_option = db.query(models.VoteOption).filter_by(id=vote_option_id).first()
+    if db_vote_option == None:
+        raise HTTPException(status_code=404, detail="vote_option not found")
+    db_vote_option.count += 1
+    db_vote_option.updated_at = datetime.now()
+    db.add(db_vote_option)
+    db.commit()
+    db.refresh(db_vote_option)
+    return db_vote_option
+
 
 # 투표 질문 선택지 생성
 def create_vote_option(db: Session, question_id: int, option: List[str]):
     created_option = []
     for i in range(0, len(option)): #옵션의 개수만큼 vote comment에 저장
-        db_vote_option = models.VoteOption(num=i+1, content = option[i], count = 0
-            , question_id = question_id)
+        db_vote_option = models.VoteOption(num=i + 1, content = option[i], count = 0
+                                           , question_id = question_id)
         db.add(db_vote_option)
         db.commit()
         db.refresh(db_vote_option)
@@ -77,7 +101,7 @@ def create_vote_option(db: Session, question_id: int, option: List[str]):
     
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
-    db_comment = models.Comment(content = comment.content, question_id = comment.question_id, type = "n")
+    db_comment = models.Comment(content = comment.content, question_id = comment.question_id, type ="n")
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
