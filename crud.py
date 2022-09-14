@@ -19,6 +19,7 @@ def insert_questions(db: Session):
     db.commit()
     file.close()
 
+question_type = ["vote", "challenge", "text", "sound"]
 
 def get_questions_by_userid(db: Session, user_id: int):
     return db.query(models.Question).filter(models.Question.user_id == user_id).all()
@@ -47,6 +48,13 @@ def get_random_question(db: Session, question_type: str):
 def get_questionid(db:Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
+#question id가 일치하는 옵션 모두 리스트로 반환
+def get_vote_options(db: Session, question_id: int):
+    options = db.query(models.VoteOption).filter(models.VoteOption.question_id == question_id).all()
+    return options
+    
+    #question id가 일치하는 옵션 객체를 리스트에 넣기
+    
 
 # def create_user(db: Session, user: schemas.UserCreate):
 #     db_user = models.User(insta_id=user.insta_id)
@@ -57,7 +65,7 @@ def get_questionid(db:Session, question_id: int):
 
 
 def create_question(db: Session, question: schemas.QuestionCreate):
-    if(question.type in ["n","v"]):
+    if(question.type in question_type):
         db_question = models.Question(content=question.content, user_id=question.user_id, type=question.type)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
