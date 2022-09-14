@@ -4,16 +4,16 @@ import os, shutil, boto3
 import random
 from typing import List
 
-from fastapi import Depends, FastAPI, HTTPException
+
 from botocore.exceptions import ClientError
-from fastapi import Depends, FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import Depends, FastAPI, HTTPException, UploadFile, Form
 from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from starlette.middleware.cors import CORSMiddleware
 
+from starlette.middleware.cors import CORSMiddleware
 import crud
-import models
-import schemas
+from utils import check_db_connected
+import models, schemas
 from database import SessionLocal, engine
 from voice_alteration import voice_alteration
 
@@ -61,7 +61,14 @@ def get_db():
         db.close()
 
 
-
+@app.on_event("startup")
+async def app_startup():
+    await check_db_connected()
+    db = SessionLocal()
+    questions = crud.get_random_question(db, "challenge")
+    if len(questions) == 0:
+        crud.insert_questions(db)
+    db.close()
 
 
 # 접속시 자동으로 문서페이지로 이동
@@ -138,7 +145,7 @@ def show_comment(comment_id: int, db: Session = Depends(get_db)):
 
 # B-4
 # 원하는 type을 query parameter로 받아 해당 type인 질문을 랜덤으로 반환
-@app.get('/api/v1/questions', response_model=schemas.RandomQuestion, status_code=200)
+@app.get('/api/v1/questions/random', response_model=schemas.RandomQuestion, status_code=200)
 def show_random_question(type: str, db: Session = Depends(get_db)):
     questions = crud.get_random_question(db, question_type=type)
     if len(questions) == 0:
@@ -163,6 +170,7 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="question is not found")
     return crud.get_question(db, question_id=question_id)
 
+
 # C-3
 # 링크 접속 시 투표 내용 반환
 # @app.get('/api/v1/questions', response_model=schemas.Question)
@@ -174,7 +182,6 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 # 투표 답변(comment) 저장
 # @app.patch('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteComment)
 # def create_vote_comment(, db: Session = Depends(get_db))
-
 
 
 # # user 생성에 필요한 정보를 보내면 DB에 저장
@@ -193,20 +200,16 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # B-10
 # 투표 질문 저장
 @app.post('/api/v1/questions/vote/{userId}')
-def create_vote_question(question: schemas.QuestionCreate, option:List[str], db: Session = Depends(get_db)):
-    
-    created_question = crud.create_question(db, question=question) 
-<<<<<<< dev
+def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
+    created_question = crud.create_question(db, question=question)
     created_option = crud.create_vote_option(db, created_question.id, option)
-    if(created_question == None):
-=======
-    created_option = crud.create_vote_comment(db, created_question.id, option)
+    if (created_question == None):
+        created_option = crud.create_vote_comment(db, created_question.id, option)
     if created_question is None:
->>>>>>> feat: 랜덤 질문 생성 API 구현
         raise HTTPException(status_code=404, detail="question creation failed")
     if len(created_option) < 1:
         raise HTTPException(status_code=404, detail="option creation failed")
-    return {"question_id" : created_question.id, "option" : created_option}
+    return {"question_id": created_question.id, "option": created_option}
 
 
 # B-8
@@ -226,7 +229,6 @@ def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db))
     elif crud.get_question(db, question_id=comment.question_id) is None:
         raise HTTPException(status_code=404, detail="question is not found")
     return crud.create_comment(db, comment=comment)
-
 
 # 나중에 참고용 으로 일단 주석처리
 # @app.put('/users/{user_id}', response_model=schemas.User)
