@@ -173,6 +173,10 @@ def get_refresh_token(long_access_token: str):
     res = requests.get(refresh_token_url+long_access_token)
     return res.json()['access_token']
 
+@app.post('/api/v1/check', status_code=200)
+def find_access_token():
+    return 0
+
 def create_user_by_user_info(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db, user=user)
 
