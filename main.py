@@ -102,6 +102,26 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
     return comments
 
 
+# D-7
+# user_id를 path variable로 받아 해당 user의 유효한 질문들의 답변들을 반환
+@app.get('/api/v1/users/{user_id}/comments/text', response_model=List[schemas.Comment], status_code=200)
+def show_valid_comments(user_id: int, db: Session = Depends(get_db)):
+    comments = crud.get_valid_comments(db, user_id=user_id)
+    return comments
+
+
+@app.get('/api/v1/users/{user_id}/comments/vote', response_model=List[schemas.VoteOptions], status_code=200)
+def show_valid_vote_comments(user_id: int, db: Session = Depends(get_db)):
+    comments = crud.get_valid_comments(db, user_id=user_id)
+    return comments
+
+
+@app.get('/api/v1/users/{user_id}/comments/sound', response_model=List[schemas.Comment], status_code=200)
+def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
+    comments = crud.get_valid_comments(db, user_id=user_id)
+    return comments
+
+
 # C-6
 # .wav 파일과 question_id를 form 데이터로 받아 해당 파일 음성 변조해 s3 bucket에 파일 저장,  url도 db에 저장
 @app.post('/api/v1/comments/voice', response_model=schemas.Comment, status_code=201)
