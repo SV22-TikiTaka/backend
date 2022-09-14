@@ -111,7 +111,8 @@ def get_insta_code(code: str, db: Session = Depends(get_db)):
     user_create_data = schemas.UserCreate(insta_id=user_info['insta_id'], name=user_info['name'],\
          follower=user_info['follower'], following=user_info['following'], \
             profile_image_url=user_info['profile_image_url'])
-    # result_info = create_user_by_user_info(user_create_data, db)
+    result_info = requests.post("https://localhost:8000/api/v1/users", data=user_create_data, verify=False).json()
+    # print(result_info)
     # return result_info
 
 
@@ -146,7 +147,9 @@ def get_long_token(short_access_token: str):
 # 엑세스 토큰으로 user info 얻기
 def get_user_info(access_token: str):
     try:
-        username = requests.get(get_user_name_url + access_token).json()["username"]
+        res = requests.get(get_user_name_url + access_token).json()
+        username = res["username"]
+        print(res)
         
         # 만약 헤더 오류 시 아래 api로 대체
         # user_info = requests.get(f'https://www.instagram.com/web/search/topsearch/?query={username}')
@@ -159,12 +162,13 @@ def get_user_info(access_token: str):
         }
         # username으로 user 정보 가져오는 api 호출
         user_info = requests.get(get_user_info_url + username, headers=headers).json()['data']['user']
-
+        insta_id = user_info['id']
         name = user_info['full_name']
         follower = user_info['edge_followed_by']['count']
         following = user_info['edge_follow']['count']
         profile_image_url = user_info['profile_pic_url']
-        return {'insta_id': username, 'name': name, 'follower': follower, 'following': following,\
+        return {'insta_id': insta_id, 'insta_id': username,
+        'name': name, 'follower': follower, 'following': following,
              'profile_image_url': profile_image_url}
     except Exception as ex:
         print(str(ex.args))
@@ -173,12 +177,12 @@ def get_refresh_token(long_access_token: str):
     res = requests.get(refresh_token_url+long_access_token)
     return res.json()['access_token']
 
-@app.post('/api/v1/check', status_code=200)
-def find_access_token():
-    return 0
+# @app.post('/api/v1/check', status_code=200)
+# def find_access_token():
+#     return 0
 
-def create_user_by_user_info(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db, user=user)
+# def create_user_by_user_info(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    
 
 # ----------------------------------------------------
 
@@ -313,8 +317,9 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 # user 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/users', response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # return crud.create_user(db, user=user)
-    return create_user_by_user_info(user, db)
+    print('\nok\n')
+
+    return crud.create_user(db, user=user)
 
 
 # B-9

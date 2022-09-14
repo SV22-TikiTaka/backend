@@ -134,6 +134,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    print('\nok\n')
     return db_user
 
 
