@@ -124,14 +124,6 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
     return comment
 
 
-# D-3
-# comment_id를 path variable로 받아 해당 comment를 반환
-@app.get('/api/v1/comments/{comment_id}', response_model=schemas.Comment, status_code=200)
-def show_comment(comment_id: int, db: Session = Depends(get_db)):
-    comment = crud.get_comment(db, comment_id=comment_id)
-    if comment is None:
-        raise HTTPException(status_code=404, detail="comment is not found")
-    return comment
 
 
 # user_id를 path variable로 받아서 해당 user의 정보를 반환
@@ -223,3 +215,29 @@ def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db))
 #     db.commit()
 #     response = schemas.response(message="Successfully removed!")
 #     return response
+
+# D-3
+# comment_id를 path variable로 받아 해당 comment를 반환
+@app.get('/api/v1/comments/{comment_id}', response_model=schemas.Comment, status_code=200)
+def show_comment(comment_id: int, db: Session = Depends(get_db)):
+    comment = crud.get_comment(db, comment_id=comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="comment is not found")
+    return comment
+
+# D-5
+# 투표 질문 클릭시 투표 옵션 및 결과 반환
+@app.get('/api/v1/comments/vote/{question_id}', response_model=schemas.VoteResult, status_code=200)
+def show_vote_result(question_id: int, db: Session=Depends(get_db)):
+    
+    vote_question = crud.get_question(db, question_id=question_id)
+    vote_options = crud.get_vote_options(db, question_id)
+    vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
+    vote_count = [vote_options[i].count for i in range(len(vote_options))]
+    updated_at = vote_options[0].updated_at #옵션객체.updated_at 셋 중 가장최근시간
+
+    return schemas.VoteResult(options=vote_option_contents, count=vote_count,
+        created_at=vote_question.created_at, updated_at=updated_at)
+
+    
+    
