@@ -22,8 +22,6 @@ def insert_questions(db: Session):
     db.commit()
     file.close()
 
-question_type = ["vote", "challenge", "text", "sound"]
-
 
 def get_questions_by_userid(db: Session, user_id: int):
     return db.query(models.Question).filter(models.Question.user_id == user_id).all()
