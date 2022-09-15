@@ -9,6 +9,7 @@ from datetime import datetime
 import models, schemas
 
 question_type = ["vote", "challenge", "normal"]
+comment_type = ["text", "sound", "anything"]
 
 
 def insert_questions(db: Session):
@@ -117,7 +118,8 @@ def get_vote_options(db: Session, question_id: int):
 
 def create_question(db: Session, question: schemas.QuestionCreate):
     if(question.type in question_type):
-        db_question = models.Question(content=question.content, user_id=question.user_id, type=question.type)
+        db_question = models.Question(content=question.content, user_id=question.user_id, type=question.type
+            ,comment_type = question.comment_type)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
     db.add(db_question)

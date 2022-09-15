@@ -16,6 +16,7 @@ from utils import check_db_connected
 import models, schemas
 from database import SessionLocal, engine
 from voice_alteration import voice_alteration
+import crud
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -222,6 +223,10 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/questions', response_model=schemas.Question)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
+    if(question.type not in crud.question_type or crud.question_type == "vote"):
+        raise HTTPException(status_code=415, detail="unsupported question type")
+    if(question.comment_type not in crud.comment_type):
+        raise HTTPException(status_code=415, detail="unsupported comment type")
     return crud.create_question(db, question=question)
 
 
