@@ -129,12 +129,11 @@ def get_vote_options(db: Session, question_id: int):
 
 
 def create_user(db: Session, user: schemas.UserCreate):
-    db_user = models.User(insta_id=user.insta_id, name=user.name, \
+    db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, \
         follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    print('\nok\n')
     return db_user
 
 

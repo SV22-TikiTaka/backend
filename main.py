@@ -81,11 +81,10 @@ def main():
 
 
 # ----------------------------------------------------
-# 인스타 로그인 및 프로필 정보 가져오기
-
+# 인스타 로그인 및 프로필 정보 가져오기 및 유저 관련 API
 app_id = os.getenv('INSTA_APP_ID')
 secret_id = os.getenv('INSTA_APP_SECRET_ID')
-redirect_url = "https://localhost:8000/insta"
+redirect_url = "https://localhost:8000/api/v1/insta/redirection"
 authorize_url = f"https://api.instagram.com/oauth/authorize?client_id=\
     {app_id}&redirect_uri={redirect_url}&scope=user_profile,user_media&response_type=code"
 get_short_token_url = "https://api.instagram.com/oauth/access_token"
@@ -94,26 +93,41 @@ get_user_info_url = "https://i.instagram.com/api/v1/users/web_profile_info/?user
 get_long_token_url = f"https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret={secret_id}&access_token="
 refresh_token_url = "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token="
 
+
 # 인스타 연동 페이지로 이동
 @app.get("/api/v1/authorize")
 async def go_to_authorize_page():
     return RedirectResponse(url=authorize_url)
 
 
-# 인스타 연동 성공시 리디렉션되는 API, 발행된 code로 장기 토큰 얻기
-@app.get("/insta")
-def get_insta_code(code: str, db: Session = Depends(get_db)):
+# 인스타 연동 시 리디렉션되는 API, 발행된 code로 장기 토큰 얻기
+@app.get("/api/v1/insta/redirection")
+def get_insta_code(code: str, error: str, error_description: str, db: Session = Depends(get_db)):
+    # 인증 실패 시
+    if error is not None:
+        print('1')
+        raise HTTPException(status_code=404, detail=error_description)
+        # 적절한 페이지로 이동시키기
+    # 코드가 없으면
     if code is None:
+        print('2')
         raise HTTPException(status_code=404, detail="code is not found")
+    # 단기 실행 토큰 발급
     short_token = get_short_token(code)
-    long_token = get_long_token(short_token)['long_access_token']
+    print('3')
+    # 장기 실행 토큰 발급
+    long_token = get_long_token(short_token)['access_token']
+    print('4')
+    # 장기 실행 토큰으로 유저 정보 불러오기
     user_info = get_user_info(long_token)
-    user_create_data = schemas.UserCreate(insta_id=user_info['insta_id'], name=user_info['name'],\
-         follower=user_info['follower'], following=user_info['following'], \
+    print(user_info)
+    user_create_data = schemas.UserCreate(insta_id=user_info['insta_id'], username=user_info['username'],\
+        full_name=user_info['full_name'], follower=user_info['follower'], following=user_info['following'], \
             profile_image_url=user_info['profile_image_url'])
-    result_info = requests.post("https://localhost:8000/api/v1/users", data=user_create_data, verify=False).json()
-    # print(result_info)
-    # return result_info
+    try:
+        user = create_user(user=user_create_data, db=db)
+    except Exception as ex:
+        print(ex)
 
 
 # 단기 토큰 얻기
@@ -127,8 +141,12 @@ def get_short_token(code: str):
     }
     headers = {'Content-Type': 'application/x-www-form-urlencoded', 'charset': 'UTF-8', 'Accept': '*/*'}
     try:
-        res = requests.post(get_short_token_url, headers = headers, data = data)
-        return res.json()["access_token"]
+        res = requests.post(get_short_token_url, headers = headers, data = data).json()
+        # 유효하지 않은 코드면
+        if res['error_type'] is not None:
+            raise HTTPException(status_code=404, detail=res['error_message'])
+            # 적절한 페이지로 이동시키기
+        else: return res.json()["access_token"]
     except Exception as ex:
         print(ex.args)
 
@@ -136,15 +154,13 @@ def get_short_token(code: str):
 # 장기 토큰 얻기
 def get_long_token(short_access_token: str):
     try:
-        res = requests.get(get_long_token_url+short_access_token)
-        long_access_token = res.json()['access_token']
-        expires_in = res.json()['expires_in']
-        return {'long_access_token': long_access_token, 'expires_in': expires_in}
+        res = requests.get(get_long_token_url+short_access_token).json()
+        return res
     except Exception as ex:
         print(ex.args)
 
 
-# 엑세스 토큰으로 user info 얻기
+# 엑세스 토큰으로 user info 반환
 def get_user_info(access_token: str):
     try:
         res = requests.get(get_user_name_url + access_token).json()
@@ -162,27 +178,45 @@ def get_user_info(access_token: str):
         }
         # username으로 user 정보 가져오는 api 호출
         user_info = requests.get(get_user_info_url + username, headers=headers).json()['data']['user']
+        
         insta_id = user_info['id']
-        name = user_info['full_name']
+        full_name = user_info['full_name']
         follower = user_info['edge_followed_by']['count']
         following = user_info['edge_follow']['count']
         profile_image_url = user_info['profile_pic_url']
-        return {'insta_id': insta_id, 'insta_id': username,
-        'name': name, 'follower': follower, 'following': following,
-             'profile_image_url': profile_image_url}
-    except Exception as ex:
-        print(str(ex.args))
 
+        return {'insta_id': insta_id, 'username': username, 'full_name': full_name,
+            'follower': follower, 'following': following,
+            'profile_image_url': profile_image_url}
+
+    except Exception as ex:
+        print(ex.args)
+
+
+# 만료되지 않은 장기토큰을 리프레쉬하여 새 토큰 반환
 def get_refresh_token(long_access_token: str):
     res = requests.get(refresh_token_url+long_access_token)
-    return res.json()['access_token']
+    return res.json()
+
+
+# user 생성에 필요한 정보를 보내면 DB에 저장
+@app.post('/api/v1/users', response_model=schemas.User)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    try:
+        return crud.create_user(db, user=user)
+    except Exception as ex:
+        print(ex.args)
+
+
+# user_id를 path variable로 받아서 해당 user의 정보를 반환
+@app.get('/api/v1/users/{user_id}', response_model=schemas.User)
+def show_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.get_user(db, user_id=user_id)
+
 
 # @app.post('/api/v1/check', status_code=200)
 # def find_access_token():
 #     return 0
-
-# def create_user_by_user_info(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    
 
 # ----------------------------------------------------
 
@@ -295,11 +329,6 @@ def show_random_question(type: str, db: Session = Depends(get_db)):
     return questions[idx]
 
 
-# user_id를 path variable로 받아서 해당 user의 정보를 반환
-@app.get('/api/v1/users/{user_id}', response_model=schemas.User)
-def show_user(user_id: int, db: Session = Depends(get_db)):
-    return crud.get_user(db, user_id=user_id)
-
 # C-2
 # 링크 접속 시 질문 내용 반환
 @app.get('/api/v1/questions', response_model=schemas.Question)
@@ -312,14 +341,6 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
     return crud.update_vote_count(db, vote_comment_id)
 
-
-
-# user 생성에 필요한 정보를 보내면 DB에 저장
-@app.post('/api/v1/users', response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    print('\nok\n')
-
-    return crud.create_user(db, user=user)
 
 
 # B-9
