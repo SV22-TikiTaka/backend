@@ -43,13 +43,18 @@ def get_comment(db: Session, comment_id: int):
 
 
 def get_valid_questions_by_userid(db: Session, user_id: int):
-    return db.query(models.Question).filter(models.Question.is_deleted == False)\
+    return db.query(models.Question).filter(models.Question.is_deleted == False) \
         .filter(models.Question.type != "vote").filter(models.Question.expired == False).all()
 
 
 def get_valid_votequestions_by_userid(db: Session, user_id: int):
-    return db.query(models.Question).filter(models.Question.is_deleted == False)\
+    return db.query(models.Question).filter(models.Question.is_deleted == False) \
         .filter(models.Question.type == "vote").filter(models.Question.expired == False).all()
+
+
+def get_expired_questions_by_userid(db: Session, user_id: int):
+    return db.query(models.Question).filter(models.Question.is_deleted == False) \
+        .filter(models.Question.user_id == user_id).filter(models.Question.expired == True).all()
 
 
 def get_valid_comments(db: Session, user_id: int):
@@ -97,15 +102,12 @@ def get_questionid(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
 
-#question id가 일치하는 옵션 모두 리스트로 반환
+# question id가 일치하는 옵션 모두 리스트로 반환
 def get_vote_options(db: Session, question_id: int):
     options = db.query(models.VoteOption).filter(models.VoteOption.question_id == question_id).all()
     return options
-    
-    #question id가 일치하는 옵션 객체를 리스트에 넣기
-    
 
-
+    # question id가 일치하는 옵션 객체를 리스트에 넣기
 
 
 # def create_user(db: Session, user: schemas.UserCreate):
@@ -120,12 +122,14 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     if(question.type in question_type):
         db_question = models.Question(content=question.content, user_id=question.user_id, type=question.type
             ,comment_type = question.comment_type)
+
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
     db.add(db_question)
     db.commit()
     db.refresh(db_question)
     return db_question
+
 
 def update_vote_count(db: Session, vote_option_id: int):
     db_vote_option = db.query(models.VoteOption).filter_by(id=vote_option_id).first()
