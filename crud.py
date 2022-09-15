@@ -52,8 +52,8 @@ def get_valid_votequestions_by_userid(db: Session, user_id: int):
 
 
 def get_expired_questions_by_userid(db: Session, user_id: int):
-    return db.query(models.Question).filter(models.Question.user_id == user_id) \
-        .filter(models.Question.expired == True).all()
+    return not db.query(models.Question).filter(models.Question.is_deleted == False) \
+        .filter(models.Question.user_id == user_id).filter(models.Question.expired == True).all()
 
 
 def get_valid_comments(db: Session, user_id: int):
