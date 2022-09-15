@@ -42,13 +42,18 @@ def get_comment(db: Session, comment_id: int):
 
 
 def get_valid_questions_by_userid(db: Session, user_id: int):
-    return db.query(models.Question).filter(models.Question.expired == False)\
-        .filter(models.Question.type != "vote").filter(models.Question.is_deleted == False).all()
+    return db.query(models.Question).filter(models.Question.is_deleted == False)\
+        .filter(models.Question.type != "vote").filter(models.Question.expired == False).all()
+
+
+def get_valid_votequestions_by_userid(db: Session, user_id: int):
+    return db.query(models.Question).filter(models.Question.is_deleted == False)\
+        .filter(models.Question.type == "vote").filter(models.Question.expired == False).all()
 
 
 def get_valid_comments(db: Session, user_id: int):
     valid_questions = get_valid_questions_by_userid(db, user_id)
-
+    print(valid_questions)
     comments = []
     for q in valid_questions:
         if (datetime.now() - q.created_at).seconds / 3600 >= 24:
@@ -89,6 +94,7 @@ def get_random_question(db: Session, question_type: str):
 
 def get_questionid(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
+
 
 #question id가 일치하는 옵션 모두 리스트로 반환
 def get_vote_options(db: Session, question_id: int):
@@ -154,7 +160,7 @@ def create_comment(db: Session, comment: schemas.CommentCreate):
 
 
 def create_sound_comment(db: Session, question_id: int):
-    db_comment = models.Comment(content="", type='s', question_id=question_id)
+    db_comment = models.Comment(content="", type='sound', question_id=question_id)
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)

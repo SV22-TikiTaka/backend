@@ -102,6 +102,7 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
     return comments
 
 
+
 # D-7
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 답변들을 반환
 @app.get('/api/v1/users/{user_id}/comments/text', response_model=List[schemas.Comment], status_code=200)
@@ -110,16 +111,30 @@ def show_valid_comments(user_id: int, db: Session = Depends(get_db)):
     return comments
 
 
-@app.get('/api/v1/users/{user_id}/comments/vote', response_model=List[schemas.VoteOptions], status_code=200)
-def show_valid_vote_comments(user_id: int, db: Session = Depends(get_db)):
-    comments = crud.get_valid_comments(db, user_id=user_id)
-    return comments
-
-
+# D-7
+# user_id를 path variable로 받아 해당 user의 유효한 질문들의 음성답변들을 반환
 @app.get('/api/v1/users/{user_id}/comments/sound', response_model=List[schemas.Comment], status_code=200)
 def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
-    comments = crud.get_valid_comments(db, user_id=user_id)
+    comments = crud.get_valid_soundcomments(db, user_id=user_id)
     return comments
+
+
+# D-7
+# user_id를 path variable로 받아 해당 user의 유효한 질문들의 투표답변들을 반환
+@app.get('/api/v1/users/{user_id}/comments/vote', response_model=List[schemas.VoteResult], status_code=200)
+def show_valid_vote_comments(user_id: int, db: Session = Depends(get_db)):
+    vote_questions = crud.get_valid_votequestions_by_userid(db, user_id=user_id)
+    voteResults = []
+    for question in vote_questions:
+        vote_options = crud.get_vote_options(db, question.id)
+        vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
+        vote_count = [vote_options[i].count for i in range(len(vote_options))]
+        updated_at = vote_options[0].updated_at
+        voteResults.append(schemas.VoteResult(question_id=question.id, options=vote_option_contents, count=vote_count,
+        created_at=question.created_at, updated_at=updated_at))
+
+    return voteResults
+
 
 
 # C-6
