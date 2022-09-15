@@ -44,11 +44,9 @@ def get_question(db: Session, question_id: int):
 
 
 def get_valid_questions(db: Session, question_id: int):
-
-    if get_question(db=db, question_id=question_id) is None:
-        raise HTTPException(status_code=404, detail="Question is not found")
-
     question = get_question(db=db, question_id=question_id)
+    if question is None:
+        raise HTTPException(status_code=404, detail="Question is not found")
 
     if question.expired: # question의 expired가 True면
         raise HTTPException(status_code=404, detail="expired Link") # 예외발생
