@@ -213,9 +213,13 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 
 # B-9
 # question 생성에 필요한 정보를 보내면 DB에 저장
-@app.post('/api/v1/questions', response_model=schemas.Question)
+@app.post('/api/v1/questions', response_model=schemas.Question, status_code=201)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
-    if(question.type not in crud.question_type or crud.question_type == "vote"):
+    if(question.type not in crud.question_type):
+        print(question.type)
+        print(crud.question_type)
+        raise HTTPException(status_code=415, detail="unsupported question type")
+    if(crud.question_type == "vote"):
         raise HTTPException(status_code=415, detail="unsupported question type")
     if(question.comment_type not in crud.comment_type):
         raise HTTPException(status_code=415, detail="unsupported comment type")
@@ -224,7 +228,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 
 # B-10
 # 투표 질문 저장
-@app.post('/api/v1/questions/vote/{userId}')
+@app.post('/api/v1/questions/vote/{userId}', status_code=201)
 def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
     created_question = crud.create_question(db, question=question)
     created_option = crud.create_vote_option(db, created_question.id, option)
@@ -247,7 +251,7 @@ def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_d
 
 # C-5
 # 텍스트 답변 저장
-@app.post('/api/v1/comments/text', response_model=schemas.Comment)
+@app.post('/api/v1/comments/text', response_model=schemas.Comment, status_code=201)
 def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
     if len(comment.content) > 100:
         raise HTTPException(status_code=404, detail="글자수 초과")
