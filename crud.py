@@ -19,7 +19,9 @@ def insert_questions(db: Session):
     db.commit()
     file.close()
 
+
 question_type = ["vote", "challenge", "text", "sound"]
+
 
 def get_questions_by_userid(db: Session, user_id: int):
     return db.query(models.Question).filter(models.Question.user_id == user_id).all()
@@ -41,20 +43,36 @@ def get_question(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
 
+def get_valid_questions(db: Session, question_id: int):
+
+    if get_question(db=db, question_id=question_id) is None:
+        raise HTTPException(status_code=404, detail="Question is not found")
+
+    question = get_question(db=db, question_id=question_id)
+
+    if question.expired: # question의 expired가 True면
+        raise HTTPException(status_code=404, detail="expired Link") # 예외발생
+    else:
+        if (datetime.now() - question.created_at).seconds / 3600 <= 24: # 24시간이 안 지났으면
+            return question # 질문 반환
+        else: # 24시간이 지났으면
+            raise HTTPException(status_code=404, detail="expired Link")
+            question.expired = True # question의 expired를 False로 변경
+            db.commit()
+            db.refresh(question)
+
+
 def get_random_question(db: Session, question_type: str):
     return db.query(models.RandomQuestion).filter(models.RandomQuestion.type == question_type).all()
 
 
-def get_questionid(db:Session, question_id: int):
-    return db.query(models.Question).filter(models.Question.id == question_id).first()
-
-#question id가 일치하는 옵션 모두 리스트로 반환
+# question id가 일치하는 옵션 모두 리스트로 반환
 def get_vote_options(db: Session, question_id: int):
     options = db.query(models.VoteOption).filter(models.VoteOption.question_id == question_id).all()
     return options
-    
-    #question id가 일치하는 옵션 객체를 리스트에 넣기
-    
+
+    # question id가 일치하는 옵션 객체를 리스트에 넣기
+
 
 # def create_user(db: Session, user: schemas.UserCreate):
 #     db_user = models.User(insta_id=user.insta_id)
@@ -65,7 +83,7 @@ def get_vote_options(db: Session, question_id: int):
 
 
 def create_question(db: Session, question: schemas.QuestionCreate):
-    if(question.type in question_type):
+    if (question.type in question_type):
         db_question = models.Question(content=question.content, user_id=question.user_id, type=question.type)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
@@ -73,6 +91,7 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     db.commit()
     db.refresh(db_question)
     return db_question
+
 
 def update_vote_count(db: Session, vote_option_id: int):
     db_vote_option = db.query(models.VoteOption).filter_by(id=vote_option_id).first()
@@ -89,19 +108,19 @@ def update_vote_count(db: Session, vote_option_id: int):
 # 투표 질문 선택지 생성
 def create_vote_option(db: Session, question_id: int, option: List[str]):
     created_option = []
-    for i in range(0, len(option)): #옵션의 개수만큼 vote comment에 저장
-        db_vote_option = models.VoteOption(num=i + 1, content = option[i], count = 0
-                                           , question_id = question_id)
+    for i in range(0, len(option)):  # 옵션의 개수만큼 vote comment에 저장
+        db_vote_option = models.VoteOption(num=i + 1, content=option[i], count=0
+                                           , question_id=question_id)
         db.add(db_vote_option)
         db.commit()
         db.refresh(db_vote_option)
         created_option.append(option[i])
-        
+
     return created_option
-    
+
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
-    db_comment = models.Comment(content = comment.content, question_id = comment.question_id, type ="n")
+    db_comment = models.Comment(content=comment.content, question_id=comment.question_id, type="n")
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
@@ -127,4 +146,3 @@ def update_sound_comment(db: Session, comment_id: int, content: str):
     # raise HTTPException(status_code=404, detail=f"todo item with id {id} not found")
 
     return db_voice_comment
-
