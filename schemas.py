@@ -91,6 +91,7 @@ class VoteOption(BaseModel):
 
 
 class VoteResult(BaseModel):
+    question_id: None | int
     options: List[str]
     count: List[int]
     created_at: Timestamp  # question 생성시간
@@ -98,3 +99,4 @@ class VoteResult(BaseModel):
 
     class Config:
         orm_mode = True
+
