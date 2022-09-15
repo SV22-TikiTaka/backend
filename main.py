@@ -130,7 +130,10 @@ def show_valid_vote_comments(user_id: int, db: Session = Depends(get_db)):
         vote_options = crud.get_vote_options(db, question.id)
         vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
         vote_count = [vote_options[i].count for i in range(len(vote_options))]
-        updated_at = vote_options[0].updated_at
+        
+        updated_time_list = sorted([vote_options[i].updated_at for i in range(len(vote_options))]) #옵션객체.updated_at 셋 중 가장최근시간
+        updated_at = updated_time_list[len(vote_options)-1] #가장 최근에 업데이트된 시간
+    
         voteResults.append(schemas.VoteResult(question_id=question.id, options=vote_option_contents, count=vote_count,
         created_at=question.created_at, updated_at=updated_at))
 
@@ -298,9 +301,11 @@ def show_vote_result(question_id: int, db: Session=Depends(get_db)):
     vote_options = crud.get_vote_options(db, question_id)
     vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
     vote_count = [vote_options[i].count for i in range(len(vote_options))]
-    updated_at = vote_options[0].updated_at #옵션객체.updated_at 셋 중 가장최근시간
-
-    return schemas.VoteResult(options=vote_option_contents, count=vote_count,
+    
+    updated_time_list = sorted([vote_options[i].updated_at for i in range(len(vote_options))]) #옵션객체.updated_at 셋 중 가장최근시간
+    updated_at = updated_time_list[len(vote_options)-1] #가장 최근에 업데이트된 시간
+    
+    return schemas.VoteResult(question_id=question_id, options=vote_option_contents, count=vote_count,
         created_at=vote_question.created_at, updated_at=updated_at)
 
     
