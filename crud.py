@@ -152,7 +152,7 @@ def create_vote_option(db: Session, question_id: int, option: List[str]):
 
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
-    db_comment = models.Comment(content=comment.content, question_id=comment.question_id, type="n")
+    db_comment = models.Comment(content=comment.content, question_id=comment.question_id, type="text")
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
