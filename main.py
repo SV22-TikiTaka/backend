@@ -111,7 +111,7 @@ def show_valid_comments(user_id: int, db: Session = Depends(get_db)):
     return comments
 
 
-# D-7
+# D-8
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 음성답변들을 반환
 @app.get('/api/v1/users/{user_id}/comments/sound', response_model=List[schemas.Comment], status_code=200)
 def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
@@ -119,7 +119,7 @@ def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
     return comments
 
 
-# D-7
+# D-9
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 투표답변들을 반환
 @app.get('/api/v1/users/{user_id}/comments/vote', response_model=List[schemas.VoteResult], status_code=200)
 def show_valid_vote_comments(user_id: int, db: Session = Depends(get_db)):
