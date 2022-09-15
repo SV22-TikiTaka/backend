@@ -100,12 +100,16 @@ def go_to_authorize_page():
     return RedirectResponse(url=authorize_url)
 
 
-# 앱 접속 시 프론트에 유효한 토큰이 있다면 리프레쉬 토큰 발급
+# 앱 접속 시 프론트에 토큰이 있다면 리프레쉬 토큰 발급
+# 토큰이 만료되었다면 인스타 연동 페이지 이동 API 호출
 # 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출
 @app.get("/api/v1/refresh_token")
 def get_refresh_token(long_access_token: str):
-    res = requests.get(refresh_token_url+long_access_token)
-    return res.json()
+    res = requests.get(refresh_token_url+long_access_token).json()
+    # 토큰이 만료되었다면
+    if res['expires_in'] < 30:
+        go_to_authorize_page()
+    return res
 
 
 # access_token으로 유저 정보 업데이트, 없다면 생성, user 반환
@@ -127,9 +131,9 @@ def user_info_change_by_access_token(access_token: str, db: Session = Depends(ge
 
 
 # 인스타 연동 시 리디렉션되는 API, 발행된 code로 장기 토큰 발급
-# 프론트에서 발급 받은 토큰, 만료시간 저장 후 user_info_change_by_access_token 호출해야함
+# 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출해야함
 @app.get("/api/v1/insta/redirection")
-def get_insta_code(code = None, error = None, error_description = None, db: Session = Depends(get_db)):
+def get_insta_code(code = None, error = None, error_description = None):
     # 인증 실패 시
     if error is not None:
         raise HTTPException(status_code=404, detail=error_description)
@@ -140,9 +144,8 @@ def get_insta_code(code = None, error = None, error_description = None, db: Sess
     # 단기 실행 토큰 발급
     short_token = get_short_token(code)
     # 장기 실행 토큰 발급
-    return get_long_token(short_token)['access_token']
-    # 테스트 시 아래 코드 주석 해제, 위 코드 주석 처리
-    # return user_info_change_by_access_token(access_token=get_long_token(short_token)['access_token'], db=db)
+    # {access_token: 'access_token', token_type: 'token_type', expires_in: 5184000}
+    return get_long_token(short_token)
 
 
 # 단기 토큰 얻기
