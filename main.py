@@ -2,8 +2,8 @@
 # 서버 시작과 API들을 관리하는 파일?
 import os, shutil, boto3
 import random
+import datetime
 from typing import List
-
 
 from botocore.exceptions import ClientError
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, Form
@@ -192,22 +192,11 @@ def show_random_question(type: str, db: Session = Depends(get_db)):
 def show_user(user_id: int, db: Session = Depends(get_db)):
     return crud.get_user(db, user_id=user_id)
 
-
 # C-2
 # 링크 접속 시 질문 내용 반환
 @app.get('/api/v1/questions', response_model=schemas.Question)
 def get_question(question_id: int, db: Session = Depends(get_db)):
-    if crud.get_question(db, question_id=question_id) is None:
-        raise HTTPException(status_code=404, detail="question is not found")
-    return crud.get_question(db, question_id=question_id)
-
-
-# C-3
-# 링크 접속 시 투표 내용 반환
-# @app.get('/api/v1/questions', response_model=schemas.Question)
-# def get_vote_question(question_type: str, db: Session = Depends(get_db)):
-#     return crud.get_vote_question(db, question_type=question_type)
-
+    return crud.get_valid_questions(db=db, question_id=question_id)
 
 # C-4
 # 투표 답변(comment) 저장
