@@ -13,8 +13,10 @@ class UserBase(BaseModel):
     following: int # user 생성 api 호출시 자동으로 부여
     profile_image_url: str # user 생성 api 호출시 자동으로 부여
 
+
 class UserCreate(UserBase):
     pass
+
 
 class User(UserBase):
     id: int  # 자동 생성

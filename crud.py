@@ -129,13 +129,32 @@ def get_vote_options(db: Session, question_id: int):
 
 
 def create_user(db: Session, user: schemas.UserCreate):
-    db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, \
-        follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
+    try:
+        db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, \
+            follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except Exception as ex:
+        print(ex)
+        return ex
+
+def update_user(db: Session, user: schemas.UserCreate):
+    db_user = db.query(models.User).filter_by(insta_id=user.insta_id).first()
+    if db_user == None:
+        return 'insta_id_not_found'
+    db_user.username = user.username
+    db_user.full_name = user.full_name
+    db_user.follower = user.follower
+    db_user.following = user.following
+    db_user.profile_image_url = user.profile_image_url
+    db_user.updated_at = datetime.now()
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
-
 
 def create_question(db: Session, question: schemas.QuestionCreate):
     if(question.type in question_type):
