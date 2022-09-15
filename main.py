@@ -16,6 +16,7 @@ from utils import check_db_connected
 import models, schemas
 from database import SessionLocal, engine
 from voice_alteration import voice_alteration
+import crud
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -80,12 +81,12 @@ def main():
 # D-6
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
 @app.get('/api/v1/users/{user_id}/questions', response_model=List[schemas.Question], status_code=200)
-def show_questions(user_id: int, db: Session = Depends(get_db)):
+def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
     user = crud.get_user(db, user_id=user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="user is not found")
 
-    questions = crud.get_questions_by_userid(db, user_id=user_id)
+    questions = crud.get_expired_questions_by_userid(db, user_id=user_id)
     return questions
 
 
@@ -98,8 +99,46 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="question is not found")
 
     comments = crud.get_comments_by_questionid(db, question_id=question_id)
-    comments.sort(key=lambda x: x.created_at)
+    # comments.sort(key=lambda x: x.created_at)
     return comments
+
+
+
+# D-7
+# user_id를 path variable로 받아 해당 user의 유효한 질문들의 답변들을 반환
+@app.get('/api/v1/users/{user_id}/comments/text', response_model=List[schemas.Comment], status_code=200)
+def show_valid_comments(user_id: int, db: Session = Depends(get_db)):
+    comments = crud.get_valid_comments(db, user_id=user_id)
+    return comments
+
+
+# D-8
+# user_id를 path variable로 받아 해당 user의 유효한 질문들의 음성답변들을 반환
+@app.get('/api/v1/users/{user_id}/comments/sound', response_model=List[schemas.Comment], status_code=200)
+def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
+    comments = crud.get_valid_soundcomments(db, user_id=user_id)
+    return comments
+
+
+# D-9
+# user_id를 path variable로 받아 해당 user의 유효한 질문들의 투표답변들을 반환
+@app.get('/api/v1/users/{user_id}/comments/vote', response_model=List[schemas.VoteResult], status_code=200)
+def show_valid_vote_comments(user_id: int, db: Session = Depends(get_db)):
+    vote_questions = crud.get_valid_votequestions_by_userid(db, user_id=user_id)
+    voteResults = []
+    for question in vote_questions:
+        vote_options = crud.get_vote_options(db, question.id)
+        vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
+        vote_count = [vote_options[i].count for i in range(len(vote_options))]
+        
+        updated_time_list = sorted([vote_options[i].updated_at for i in range(len(vote_options))]) #옵션객체.updated_at 셋 중 가장최근시간
+        updated_at = updated_time_list[len(vote_options)-1] #가장 최근에 업데이트된 시간
+    
+        voteResults.append(schemas.VoteResult(question_id=question.id, options=vote_option_contents, count=vote_count,
+        created_at=question.created_at, updated_at=updated_at))
+
+    return voteResults
+
 
 
 # C-6
@@ -176,6 +215,10 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/questions', response_model=schemas.Question)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
+    if(question.type not in crud.question_type or crud.question_type == "vote"):
+        raise HTTPException(status_code=415, detail="unsupported question type")
+    if(question.comment_type not in crud.comment_type):
+        raise HTTPException(status_code=415, detail="unsupported comment type")
     return crud.create_question(db, question=question)
 
 
@@ -247,9 +290,11 @@ def show_vote_result(question_id: int, db: Session=Depends(get_db)):
     vote_options = crud.get_vote_options(db, question_id)
     vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
     vote_count = [vote_options[i].count for i in range(len(vote_options))]
-    updated_at = vote_options[0].updated_at #옵션객체.updated_at 셋 중 가장최근시간
-
-    return schemas.VoteResult(options=vote_option_contents, count=vote_count,
+    
+    updated_time_list = sorted([vote_options[i].updated_at for i in range(len(vote_options))]) #옵션객체.updated_at 셋 중 가장최근시간
+    updated_at = updated_time_list[len(vote_options)-1] #가장 최근에 업데이트된 시간
+    
+    return schemas.VoteResult(question_id=question_id, options=vote_option_contents, count=vote_count,
         created_at=vote_question.created_at, updated_at=updated_at)
 
     

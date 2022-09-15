@@ -27,6 +27,7 @@ class QuestionBase(BaseModel):
     content: str
     user_id: int
     type: str
+    comment_type: str
 
 
 class QuestionCreate(QuestionBase):
@@ -80,7 +81,7 @@ class Comment(BaseComment):
 
 
 class VoteOption(BaseModel):
-    question_id: int
+    question_id: int or None
     id: int
     count: int
     created_at: Timestamp  # db 넣을 때 생성
@@ -91,6 +92,7 @@ class VoteOption(BaseModel):
 
 
 class VoteResult(BaseModel):
+    question_id: int
     options: List[str]
     count: List[int]
     created_at: Timestamp  # question 생성시간
@@ -98,3 +100,4 @@ class VoteResult(BaseModel):
 
     class Config:
         orm_mode = True
+
