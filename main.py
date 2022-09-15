@@ -80,12 +80,12 @@ def main():
 # D-6
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
 @app.get('/api/v1/users/{user_id}/questions', response_model=List[schemas.Question], status_code=200)
-def show_questions(user_id: int, db: Session = Depends(get_db)):
+def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
     user = crud.get_user(db, user_id=user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="user is not found")
 
-    questions = crud.get_questions_by_userid(db, user_id=user_id)
+    questions = crud.get_expired_questions_by_userid(db, user_id=user_id)
     return questions
 
 
@@ -98,7 +98,7 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="question is not found")
 
     comments = crud.get_comments_by_questionid(db, question_id=question_id)
-    comments.sort(key=lambda x: x.created_at)
+    # comments.sort(key=lambda x: x.created_at)
     return comments
 
 
