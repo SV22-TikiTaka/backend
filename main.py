@@ -89,7 +89,7 @@ def go_to_authorize_page():
 # 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출
 @app.get("/api/v1/refresh_token")
 def get_refresh_token(long_access_token: str):
-    res = requests.get(insta.refresh_token_url+long_access_token).json()
+    res = insta.get_refresh_token(long_access_token=long_access_token)
     # 토큰이 만료되었다면
     if res['expires_in'] < 30:
         go_to_authorize_page()

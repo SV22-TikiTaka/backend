@@ -49,6 +49,10 @@ def get_long_token(short_access_token: str):
         print(ex.args)
 
 
+def get_refresh_token(long_access_token: str):
+    return requests.get(refresh_token_url+long_access_token).json()
+
+
 # 엑세스 토큰으로 user info 반환
 def get_user_info(access_token: str):
     try:
