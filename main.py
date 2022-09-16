@@ -152,7 +152,7 @@ def show_user(user_id: int, db: Session = Depends(get_db)):
 
 
 # user_id를 path variable로 받아서 해당 유저를 soft delete
-@app.delete('/api/v1/users/{user_id}')
+@app.delete('/api/v1/users/{user_id}', status_code=204)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     return crud.delete_user(db=db, user_id=user_id)
 
