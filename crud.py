@@ -174,6 +174,22 @@ def delete_user(db: Session, user_id: int):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+def delete_question(db: Session, question_id: int):
+    db_question = db.query(models.Question).filter_by(id=question_id).first()
+    if db_question == None:
+        raise HTTPException(status_code=404, detail="question is not found")
+    if db_question.is_deleted:
+        raise HTTPException(status_code=405, detail="question is already deleted")
+
+    db_question.is_deleted = True
+    db_question.updated_at = datetime.now()
+    
+    db.add(db_question)
+    db.commit()
+    db.refresh(db_question)
+    return db_question
     
 
 def create_question(db: Session, question: schemas.QuestionCreate):
