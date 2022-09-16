@@ -176,6 +176,7 @@ def delete_user(db: Session, user_id: int):
     return db_user
 
 
+# question soft delete
 def delete_question(db: Session, question_id: int):
     db_question = db.query(models.Question).filter_by(id=question_id).first()
     if db_question == None:
@@ -190,6 +191,21 @@ def delete_question(db: Session, question_id: int):
     db.commit()
     db.refresh(db_question)
     return db_question
+
+
+#comment hard delete
+def delete_comment(db: Session, comment_id: int):
+    db_comment = db.query(models.Comment).filter_by(id=comment_id).first()
+    if db_comment == None:
+        raise HTTPException(status_code=404, detail="comment is not found")
+
+    db_comment.is_deleted = True
+    db_comment.updated_at = datetime.now()
+    
+    db.delete(db_comment)
+    db.commit()
+
+    return {}
     
 
 def create_question(db: Session, question: schemas.QuestionCreate):

@@ -397,4 +397,7 @@ def delete_question(question_id: int, db: Session=Depends(get_db)):
 
 # F-3
 # comment 데이터 hard 삭제
+@app.delete('/api/v1/comments/{comment_id}', status_code=204)
+def delete_comment(comment_id: int, db: Session=Depends(get_db)):
+    return crud.delete_comment(db, comment_id)
 
