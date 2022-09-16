@@ -4,6 +4,7 @@ __pycache__/
 
 # 가상환경 폴더
 .venv/
+venv/
 # 인증서 파일
 cert.pem
 key.pem
