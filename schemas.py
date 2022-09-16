@@ -7,7 +7,7 @@ from pydantic import BaseModel  # 객체 타입설정
 
 class UserBase(BaseModel):
     insta_id: str # user 생성 api 호출시 자동으로 부여
-    username: str # user 생성 api 호출시 자동으로 부여
+    user_name: str # user 생성 api 호출시 자동으로 부여
     full_name: str # user 생성 api 호출시 자동으로 부여
     follower: int # user 생성 api 호출시 자동으로 부여
     following: int # user 생성 api 호출시 자동으로 부여

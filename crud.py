@@ -123,17 +123,16 @@ def get_random_question(db: Session, question_type: str):
 def get_questionid(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
     
+    
 # question id가 일치하는 옵션 모두 리스트로 반환
 def get_vote_options(db: Session, question_id: int):
     options = db.query(models.VoteOption).filter(models.VoteOption.question_id == question_id).all()
     return options
 
-    # question id가 일치하는 옵션 객체를 리스트에 넣기
-
 
 def create_user(db: Session, user: schemas.UserCreate):
     try:
-        db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, \
+        db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, 
             follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
         db.add(db_user)
         db.commit()
@@ -169,15 +168,30 @@ def delete_user(db: Session, user_id: int):
 
     db_user.is_deleted = True
     db_user.updated_at = datetime.now()
-    
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user
+
+    # 해당 user가 가진 question까지 삭제
+    # delete_question_by_user_id(db, user_id)
+
+    return {}
+
+# question soft delete - user id로 삭제
+def delete_question_by_user_id(db: Session, user_id: int):
+    # user_id 해당되는 question데이터까지 삭제(soft)
+    # db_questions = db.query(models.Question).filter_by(id=user_id).all()
+    # if db_questions == None:
+    #     raise HTTPException(status_code=404, detail="no questions in user data")
+    
+    #question데이터중에 is_deleted가 n인것들을 모두찾아서 y로 변경
+    db.delete(Question).where(Question.user_id == user_id)
+    db.commit()
+    #변경사항 업데이트
 
 
-# question soft delete
-def delete_question(db: Session, question_id: int):
+# question soft delete - question id로 삭제
+def delete_question_by_question_id(db: Session, question_id: int):
     db_question = db.query(models.Question).filter_by(id=question_id).first()
     if db_question == None:
         raise HTTPException(status_code=404, detail="question is not found")
@@ -190,7 +204,8 @@ def delete_question(db: Session, question_id: int):
     db.add(db_question)
     db.commit()
     db.refresh(db_question)
-    return db_question
+
+    return {}
 
 
 #comment hard delete
