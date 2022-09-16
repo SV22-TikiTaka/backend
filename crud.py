@@ -59,11 +59,11 @@ def get_expired_questions_by_userid(db: Session, user_id: int):
 
 def get_valid_comments(db: Session, user_id: int):
     valid_questions = get_valid_questions_by_userid(db, user_id)
-    print(valid_questions)
     comments = []
     for q in valid_questions:
-        if (datetime.now() - q.created_at).seconds / 3600 >= 24:
+        if (datetime.now() - q.created_at).days >= 1:
             q.expired = True
+            db.add(q)
             db.commit()
             db.refresh(q)
             continue
@@ -73,11 +73,12 @@ def get_valid_comments(db: Session, user_id: int):
 
 
 def get_valid_soundcomments(db: Session, user_id: int):
-    valid_questions = valid_questions = get_valid_questions_by_userid(db, user_id)
+    valid_questions = get_valid_questions_by_userid(db, user_id)
     comments = []
     for q in valid_questions:
-        if (datetime.now() - q.created_at).seconds / 3600 >= 24:
+        if (datetime.now() - q.created_at).days >= 1:
             q.expired = True
+            db.add(q)
             db.commit()
             db.refresh(q)
             continue
