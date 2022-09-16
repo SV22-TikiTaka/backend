@@ -200,7 +200,7 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 
 # C-4
 # 투표 답변(comment) 저장
-@app.patch('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteOption)
+@app.put('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteOption)
 def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
     return crud.update_vote_count(db, vote_comment_id)
 
@@ -215,14 +215,19 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @app.post('/api/v1/questions', response_model=schemas.Question, status_code=201)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
-    if(question.type not in crud.question_type):
-        print(question.type)
-        print(crud.question_type)
+    
+    #타입 검사
+    if question.type not in crud.question_type:
         raise HTTPException(status_code=415, detail="unsupported question type")
-    if(crud.question_type == "vote"):
+    if crud.question_type == "vote":
         raise HTTPException(status_code=415, detail="unsupported question type")
-    if(question.comment_type not in crud.comment_type):
+    if question.comment_type not in crud.comment_type:
         raise HTTPException(status_code=415, detail="unsupported comment type")
+    
+    #글자수 제한 검사
+    if(len(question.content) > 40):
+        raise HTTPException(status_code=415, detail="exceeded length limit - question: 40")
+
     return crud.create_question(db, question=question)
 
 
@@ -230,14 +235,27 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # 투표 질문 저장
 @app.post('/api/v1/questions/vote/{userId}', status_code=201)
 def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
+    
+    #글자수 제한 검사
+    if len(question.content) > 20:
+        raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
+    for op in option:
+        if len(op) > 10:
+            raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
+
+    if not 2<=len(option)<=4:
+        raise HTTPException(status_code=415, detail="number of options out of range")
+
     created_question = crud.create_question(db, question=question)
     created_option = crud.create_vote_option(db, created_question.id, option)
-    if (created_question == None):
-        created_option = crud.create_vote_comment(db, created_question.id, option)
-    if created_question is None:
+
+    if created_question is not None:
+        created_option = crud.create_vote_option(db, created_question.id, option)
+    else:
         raise HTTPException(status_code=404, detail="question creation failed")
     if len(created_option) < 1:
         raise HTTPException(status_code=404, detail="option creation failed")
+    
     return {"question_id": created_question.id, "option": created_option}
 
 
