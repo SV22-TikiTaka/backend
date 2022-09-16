@@ -200,7 +200,7 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 
 # C-4
 # 투표 답변(comment) 저장
-@app.patch('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteOption)
+@app.put('/api/v1/comments/vote/{vote_comment_id}', response_model=schemas.VoteOption)
 def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
     return crud.update_vote_count(db, vote_comment_id)
 
