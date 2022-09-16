@@ -392,8 +392,9 @@ def show_vote_result(question_id: int, db: Session=Depends(get_db)):
 # F-2
 # question 데이터 soft 삭제
 @app.delete('/api/v1/questions/{question_id}', status_code=204)
-def show_vote_result(question_id: int, db: Session=Depends(get_db)):
+def delete_question(question_id: int, db: Session=Depends(get_db)):
     return crud.delete_question(db, question_id)
 
 # F-3
-# question 데이터 hard 삭제
+# comment 데이터 hard 삭제
+
