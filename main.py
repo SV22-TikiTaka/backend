@@ -132,7 +132,8 @@ def user_info_change_by_access_token(access_token: str, db: Session = Depends(ge
 
 # 인스타 연동 시 리디렉션되는 API, 발행된 code로 장기 토큰 발급
 # 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출해야함
-@app.get("/api/v1/insta/redirection")
+# 프론트에서 직접 호출할 일이 없으므로 문서에서 숨김
+@app.get("/api/v1/insta/redirection", include_in_schema=False)
 def get_insta_code(code = None, error = None, error_description = None):
     # 인증 실패 시
     if error is not None:
@@ -228,6 +229,12 @@ def update_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.get('/api/v1/users/{user_id}', response_model=schemas.User)
 def show_user(user_id: int, db: Session = Depends(get_db)):
     return crud.get_user(db, user_id=user_id)
+
+
+# user_id를 path variable로 받아서 해당 유저를 soft delete
+@app.patch('/api/v1/users/{user_id}', response_model=schemas.User)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.delete_user(db=db, user_id=user_id)
 
 # ----------------------------------------------------
 
