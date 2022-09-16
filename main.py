@@ -1,27 +1,27 @@
 # main.py
 # 서버 시작과 API들을 관리하는 파일?
-import os, shutil, boto3
-import random
-import datetime
+import os, shutil, boto3, requests, random
 from typing import List
 
+from dotenv import load_dotenv
 from botocore.exceptions import ClientError
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, Form
 from starlette.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from starlette.middleware.cors import CORSMiddleware
-import crud
 from utils import check_db_connected
-import models, schemas
+import models, schemas, crud, insta
 from database import SessionLocal, engine
 from voice_alteration import voice_alteration
-import crud
 
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# 환경변수 로드
+load_dotenv()
 
 app.add_middleware(
     CORSMiddleware,
@@ -76,6 +76,85 @@ async def app_startup():
 @app.get("/")
 def main():
     return RedirectResponse(url="/docs/")
+
+
+# 앱 접속 시 프론트에 유효한 토큰이 없다면 인스타 연동 페이지로 이동
+@app.get("/api/v1/authorize")
+def go_to_authorize_page():
+    return RedirectResponse(url=insta.authorize_url)
+
+
+# 앱 접속 시 프론트에 토큰이 있다면 리프레쉬 토큰 발급
+# 토큰이 만료되었다면 인스타 연동 페이지 이동 API 호출
+# 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출
+@app.get("/api/v1/refresh_token")
+def get_refresh_token(long_access_token: str):
+    res = insta.get_refresh_token(long_access_token=long_access_token)
+    # 토큰이 만료되었다면
+    if res['expires_in'] < 30:
+        go_to_authorize_page()
+    return res
+
+
+# access_token으로 유저 정보 업데이트, 없다면 생성, user 반환
+# 토큰 발급 및 리프레쉬 후 호출
+# 또는 링크 생성 시 user 정보 업데이트를 위해 호출
+# 프론트에서는 나중에 user 정보 조회를 위해 user_id 로컬에 저장하기
+@app.post("/api/v1/users/by_access_token")
+def user_info_change_by_access_token(access_token: str, db: Session = Depends(get_db)):
+    # 엑세스 토큰으로 user 정보 가져옴
+    user_info = insta.get_user_info(access_token=access_token)
+
+    # user 업데이트 시도, 성공시 user반환, 실패시 insta_id_not_found 반환
+    res = update_user(user=user_info, db=db)
+    
+    # user 업데이트 실패시 user 생성
+    if res == 'insta_id_not_found':
+        return create_user(user=user_info, db=db)
+    else: return res
+
+
+# 인스타 연동 시 리디렉션되는 API, 발행된 code로 장기 토큰 발급
+# 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출해야함
+# 프론트에서 직접 호출할 일이 없으므로 문서에서 숨김
+@app.get("/api/v1/insta/redirection", include_in_schema=False)
+def get_insta_code(code = None, error = None, error_description = None):
+    # 인증 실패 시
+    if error is not None:
+        raise HTTPException(status_code=404, detail=error_description)
+        # 적절한 페이지로 이동시키기
+    # 코드가 없으면
+    if code is None:
+        raise HTTPException(status_code=404, detail="code is not found")
+    # 단기 실행 토큰 발급
+    short_token = insta.get_short_token(code)
+    # 장기 실행 토큰 발급
+    # {access_token: 'access_token', token_type: 'token_type', expires_in: 5184000}
+    return insta.get_long_token(short_token)
+
+
+# user 생성에 필요한 정보를 중복 여부에 따라 생성 혹은 업데이트 API 호출
+@app.post('/api/v1/users', response_model=schemas.User)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db, user=user)
+
+
+# user 업데이트에 필요한 정보를 보내면 user 정보 업데이트
+@app.put('/api/v1/users', response_model=schemas.User)
+def update_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.update_user(db, user=user)
+
+
+# user_id를 path variable로 받아서 해당 user의 정보를 반환
+@app.get('/api/v1/users/{user_id}', response_model=schemas.User)
+def show_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.get_user(db, user_id=user_id)
+
+
+# user_id를 path variable로 받아서 해당 유저를 soft delete
+@app.put('/api/v1/users/{user_id}', response_model=schemas.User)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.delete_user(db=db, user_id=user_id)
 
 
 # D-6
@@ -187,11 +266,6 @@ def show_random_question(type: str, db: Session = Depends(get_db)):
     return questions[idx]
 
 
-# user_id를 path variable로 받아서 해당 user의 정보를 반환
-@app.get('/api/v1/users/{user_id}', response_model=schemas.User)
-def show_user(user_id: int, db: Session = Depends(get_db)):
-    return crud.get_user(db, user_id=user_id)
-
 # C-2
 # 링크 접속 시 질문 내용 반환
 @app.get('/api/v1/questions', response_model=schemas.Question)
@@ -204,11 +278,6 @@ def get_question(question_id: int, db: Session = Depends(get_db)):
 def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
     return crud.update_vote_count(db, vote_comment_id)
 
-
-# # user 생성에 필요한 정보를 보내면 DB에 저장
-# @app.post('/api/v1/users', response_model=schemas.User)
-# def create_user(user: schemas.User, db: Session = Depends(get_db)):
-#     return crud.create_user(db, user=user)
 
 
 # B-9

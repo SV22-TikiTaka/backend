@@ -87,7 +87,12 @@ def get_valid_soundcomments(db: Session, user_id: int):
 
 
 def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="user is not found")
+    elif db_user.is_deleted:
+        raise HTTPException(status_code=405, detail="user is deleted")
+    return db_user
 
 
 def get_question(db: Session, question_id: int):
@@ -126,13 +131,50 @@ def get_vote_options(db: Session, question_id: int):
     # question id가 일치하는 옵션 객체를 리스트에 넣기
 
 
-# def create_user(db: Session, user: schemas.UserCreate):
-#     db_user = models.User(insta_id=user.insta_id)
-#     db.add(db_user)
-#     db.commit()
-#     db.refresh(db_user)
-#     return db_user
+def create_user(db: Session, user: schemas.UserCreate):
+    try:
+        db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, \
+            follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except Exception as ex:
+        print(ex)
+        return ex
 
+def update_user(db: Session, user: schemas.UserCreate):
+    db_user = db.query(models.User).filter_by(insta_id=user.insta_id).first()
+    if db_user == None:
+        return 'insta_id_not_found'
+    db_user.username = user.username
+    db_user.full_name = user.full_name
+    db_user.follower = user.follower
+    db_user.following = user.following
+    db_user.profile_image_url = user.profile_image_url
+    db_user.is_deleted = False
+    db_user.updated_at = datetime.now()
+
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def delete_user(db: Session, user_id: int):
+    db_user = db.query(models.User).filter_by(id=user_id).first()
+    if db_user == None:
+        raise HTTPException(status_code=404, detail="user is not found")
+    if db_user.is_deleted:
+        raise HTTPException(status_code=405, detail="user is already deleted")
+
+    db_user.is_deleted = True
+    db_user.updated_at = datetime.now()
+    
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+    
 
 def create_question(db: Session, question: schemas.QuestionCreate):
     if(question.type in question_type):

@@ -14,11 +14,12 @@ class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    insta_id = Column(String(30), unique=True) # 인스타 id 길이 제한이 30자 라서 수정
-    name = Column(String(30))
+    insta_id = Column(String(30), unique=True) # 인스타 에서 관리하는 숫자형태의 id, user 구분을 위해 사용
+    username = Column(String(30)) # 인스타 id 길이 제한이 30자 라서 수정
+    full_name = Column(String(30))
     follower = Column(Integer)
     following = Column(Integer)
-    profile_image_url = Column(String(400)) # 제 url 길이가 338자라서 여유있게 했습니다
+    profile_image_url = Column(String(500)) # 제 url 길이가 440자라서 여유있게 했습니다
     is_deleted = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
