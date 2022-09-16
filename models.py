@@ -28,6 +28,7 @@ class User(Base):
     user_question = relationship("Question")
 
 
+
 class Question(Base):
     __tablename__ = "question"
 

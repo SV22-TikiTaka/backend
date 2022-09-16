@@ -132,7 +132,7 @@ def get_vote_options(db: Session, question_id: int):
 
 def create_user(db: Session, user: schemas.UserCreate):
     try:
-        db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, 
+        db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, \
             follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
         db.add(db_user)
         db.commit()
@@ -159,6 +159,7 @@ def update_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
+
 def delete_user(db: Session, user_id: int):
     db_user = db.query(models.User).filter_by(id=user_id).first()
     if db_user == None:
@@ -173,21 +174,23 @@ def delete_user(db: Session, user_id: int):
     db.refresh(db_user)
 
     # 해당 user가 가진 question까지 삭제
-    # delete_question_by_user_id(db, user_id)
+    delete_question_by_user_id(db, user_id)
 
     return {}
+
 
 # question soft delete - user id로 삭제
 def delete_question_by_user_id(db: Session, user_id: int):
     # user_id 해당되는 question데이터까지 삭제(soft)
-    # db_questions = db.query(models.Question).filter_by(id=user_id).all()
-    # if db_questions == None:
-    #     raise HTTPException(status_code=404, detail="no questions in user data")
+    db_questions = db.query(models.Question).filter_by(user_id=user_id, is_deleted=False).all()
     
-    #question데이터중에 is_deleted가 n인것들을 모두찾아서 y로 변경
-    db.delete(Question).where(Question.user_id == user_id)
-    db.commit()
-    #변경사항 업데이트
+    if db_questions == None:
+        raise HTTPException(status_code=404, detail="no questions in user data")
+    for q in db_questions:
+        q.is_deleted = True
+        db.add(q)
+        db.commit()
+        db.refresh(q)
 
 
 # question soft delete - question id로 삭제
@@ -200,7 +203,6 @@ def delete_question_by_question_id(db: Session, question_id: int):
 
     db_question.is_deleted = True
     db_question.updated_at = datetime.now()
-    
     db.add(db_question)
     db.commit()
     db.refresh(db_question)
