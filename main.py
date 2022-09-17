@@ -78,14 +78,16 @@ def main():
     return RedirectResponse(url="/docs/")
 
 
+# A-1
+# 인스타그램 로그인 페이지로 이동한다.
 # 앱 접속 시 프론트에 유효한 토큰이 없다면 인스타 연동 페이지로 이동
 @app.get("/api/v1/authorize")
 def go_to_authorize_page():
     return RedirectResponse(url=insta.authorize_url)
 
 
-# 앱 접속 시 프론트에 토큰이 있다면 리프레쉬 토큰 발급
-# 토큰이 만료되었다면 인스타 연동 페이지 이동 API 호출
+# A-2
+# 장기 토큰을 리프레쉬 하여 반환. 만료된 토큰이면 A-1 API로 리디렉션된다.
 # 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출
 @app.get("/api/v1/refresh_token")
 def get_refresh_token(long_access_token: str):
@@ -96,7 +98,8 @@ def get_refresh_token(long_access_token: str):
     return res
 
 
-# access_token으로 유저 정보 업데이트, 없다면 생성, user 반환
+# A-3
+# access_token으로 유저 정보 업데이트, 없다면 생성 후 user를 반환한다.
 # 토큰 발급 및 리프레쉬 후 호출
 # 또는 링크 생성 시 user 정보 업데이트를 위해 호출
 # 프론트에서는 나중에 user 정보 조회를 위해 user_id 로컬에 저장하기
@@ -114,7 +117,36 @@ def user_info_change_by_access_token(access_token: str, db: Session = Depends(ge
     else: return res
 
 
-# 인스타 연동 시 리디렉션되는 API, 발행된 code로 장기 토큰 발급
+# A-4
+# user 생성에 필요한 정보를 보내면 user를 생성한다.
+@app.post('/api/v1/users', response_model=schemas.User)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db, user=user)
+
+
+# A-5
+# user 업데이트에 필요한 정보를 보내면 user 정보를 업데이트한다.
+@app.put('/api/v1/users', response_model=schemas.User)
+def update_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.update_user(db, user=user)
+
+
+# A-6
+# user_id를 path variable로 받아서 해당 user의 정보를 반환한다.
+@app.get('/api/v1/users/{user_id}', response_model=schemas.User)
+def show_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.get_user(db, user_id=user_id)
+
+
+# A-7
+# user_id를 path variable로 받아서 해당 유저를 soft delete한다.
+@app.delete('/api/v1/users/{user_id}', status_code=204)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.delete_user(db=db, user_id=user_id)
+
+
+# A-8
+# 인스타 연동 시 리디렉션되는 API, 발행된 code로 장기 토큰을 발급한다.
 # 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출해야함
 # 프론트에서 직접 호출할 일이 없으므로 문서에서 숨김
 @app.get("/api/v1/insta/redirection", include_in_schema=False)
@@ -131,30 +163,6 @@ def get_insta_code(code = None, error = None, error_description = None):
     # 장기 실행 토큰 발급
     # {access_token: 'access_token', token_type: 'token_type', expires_in: 5184000}
     return insta.get_long_token(short_token)
-
-
-# user 생성에 필요한 정보를 중복 여부에 따라 생성 혹은 업데이트 API 호출
-@app.post('/api/v1/users', response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db, user=user)
-
-
-# user 업데이트에 필요한 정보를 보내면 user 정보 업데이트
-@app.put('/api/v1/users', response_model=schemas.User)
-def update_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.update_user(db, user=user)
-
-
-# user_id를 path variable로 받아서 해당 user의 정보를 반환
-@app.get('/api/v1/users/{user_id}', response_model=schemas.User)
-def show_user(user_id: int, db: Session = Depends(get_db)):
-    return crud.get_user(db, user_id=user_id)
-
-
-# user_id를 path variable로 받아서 해당 유저를 soft delete
-@app.delete('/api/v1/users/{user_id}', status_code=204)
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    return crud.delete_user(db=db, user_id=user_id)
 
 
 # D-6
