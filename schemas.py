@@ -68,7 +68,6 @@ class RandomQuestion(BaseModel):
 
 class BaseComment(BaseModel):
     content: str
-    type: str
     question_id: int
 
 
@@ -78,6 +77,7 @@ class CommentCreate(BaseComment):
 
 class Comment(BaseComment):
     id: int
+    type: str
     created_at: Timestamp  # db 넣을 때 생성
     updated_at: Timestamp  # db 넣을 때 생성
 
@@ -85,8 +85,17 @@ class Comment(BaseComment):
         orm_mode = True
 
 
-class VoteOption(BaseModel):
+class BaseVoteOption(BaseModel):
+    num: int
+    content: str
     question_id: int or None
+
+
+class CreateVoteOption(BaseVoteOption):
+    pass
+
+
+class VoteOption(BaseVoteOption):
     id: int
     count: int
     created_at: Timestamp  # db 넣을 때 생성
