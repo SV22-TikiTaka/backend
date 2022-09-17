@@ -16,7 +16,7 @@ load_dotenv()
 # DB 주소
 DB_URL = (f"mysql+pymysql://{os.getenv('MYSQL_USER')}" +
           f":{os.getenv('MYSQL_ROOT_PASSWORD')}@{os.getenv('MYSQL_HOST')}" +
-          f":{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DATABASE')}?charset=utf8")
+          f":{os.getenv('MYSQL_PORT')}/{os.getenv('MYSQL_DATABASE')}?charset=utf8mb4")
 
 
 # sqlalchemy 엔진, main.py에서 사용

@@ -171,7 +171,7 @@ def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
 
 # D-2
 # question_id를 query parameter로 받아서 해당 question에 해당하는 comment들을 반환
-@app.get('/api/v1/users/comments', response_model=List[schemas.Comment], status_code=200)
+@app.get('/api/v1/users/comments/', response_model=List[schemas.Comment], status_code=200)
 def show_comments(question_id: int, db: Session = Depends(get_db)):
     question = crud.get_question(db, question_id=question_id)
     if question is None:
