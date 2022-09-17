@@ -217,9 +217,6 @@ def delete_comment(db: Session, comment_id: int):
     if db_comment == None:
         raise HTTPException(status_code=404, detail="comment is not found")
 
-    db_comment.is_deleted = True
-    db_comment.updated_at = datetime.now()
-    
     db.delete(db_comment)
     db.commit()
 
