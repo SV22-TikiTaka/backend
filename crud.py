@@ -189,6 +189,7 @@ def delete_question_by_user_id(db: Session, user_id: int):
         raise HTTPException(status_code=404, detail="no questions in user data")
     for q in db_questions:
         q.is_deleted = True
+        q.updated_at = datetime.now()
         db.add(q)
         db.commit()
         db.refresh(q)
