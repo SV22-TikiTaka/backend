@@ -27,3 +27,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # DB모델이나 클래스를 만들기 위해 선언한 클래스(후에 상속해서 사용)
 Base = declarative_base()
+
+
+def get_db():
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()
