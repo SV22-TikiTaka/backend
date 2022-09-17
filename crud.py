@@ -133,8 +133,7 @@ def get_vote_options(db: Session, question_id: int):
 
 def create_user(db: Session, user: schemas.UserCreate):
     try:
-        db_user = models.User(insta_id=user.insta_id, username=user.username, full_name=user.full_name, \
-            follower=user.follower, following=user.following, profile_image_url=user.profile_image_url)
+        db_user = models.User(user)
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
@@ -226,8 +225,7 @@ def delete_comment(db: Session, comment_id: int):
 
 def create_question(db: Session, question: schemas.QuestionCreate):
     if(question.type in question_type):
-        db_question = models.Question(content=question.content, user_id=question.user_id, type=question.type
-            ,comment_type = question.comment_type)
+        db_question = models.Question(question)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
     db.add(db_question)
@@ -252,8 +250,7 @@ def update_vote_count(db: Session, vote_option_id: int):
 def create_vote_option(db: Session, question_id: int, option: List[str]):
     created_option = []
     for i in range(0, len(option)):  # 옵션의 개수만큼 vote comment에 저장
-        db_vote_option = models.VoteOption(num=i + 1, content=option[i], count=0
-                                           , question_id=question_id)
+        db_vote_option = models.VoteOption(num=i + 1, content=option[i], question_id=question_id)
         db.add(db_vote_option)
         db.commit()
         db.refresh(db_vote_option)
@@ -263,7 +260,7 @@ def create_vote_option(db: Session, question_id: int, option: List[str]):
 
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
-    db_comment = models.Comment(content=comment.content, question_id=comment.question_id, type="text")
+    db_comment = models.Comment(content=comment.content, type='text', question_id=comment.question_id)
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)

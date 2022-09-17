@@ -7,6 +7,8 @@ from sqlalchemy.orm import relationship
 
 from database import Base
 
+import schemas
+
 metadata = MetaData()
 
 
@@ -20,9 +22,21 @@ class User(Base):
     follower = Column(Integer)
     following = Column(Integer)
     profile_image_url = Column(String(500)) # 제 url 길이가 440자라서 여유있게 했습니다
-    is_deleted = Column(Boolean, default=False)
-    created_at = Column(TIMESTAMP, default=Timestamp.now())
-    updated_at = Column(TIMESTAMP, default=Timestamp.now())
+    is_deleted = Column(Boolean)
+    created_at = Column(TIMESTAMP)
+    updated_at = Column(TIMESTAMP)
+
+    def __init__(self, user: schemas.UserCreate):
+        self.insta_id = user.insta_id
+        self.username = user.username
+        self.full_name = user.full_name
+        self.follower = user.follower
+        self.following = user.following
+        self.profile_image_url = user.profile_image_url
+        self.is_deleted = False
+        self.created_at = Timestamp.now()
+        self.updated_at = self.created_at
+
 
     # user - question 1:N 관계 설정
     user_question = relationship("Question")
@@ -45,6 +59,16 @@ class Question(Base):
     question_comment = relationship("Comment")
     question_vote_option = relationship("VoteOption")
 
+    def __init__(self, question: schemas.QuestionCreate):
+        self.content = question.content
+        self.user_id = question.user_id
+        self.type = question.type
+        self.comment_type = question.comment_type
+        self.expired = False
+        self.is_deleted = False
+        self.created_at = Timestamp.now()
+        self.updated_at = self.created_at
+
 
 class Comment(Base):
     __tablename__ = "comment"
@@ -55,6 +79,13 @@ class Comment(Base):
     question_id = Column(Integer, ForeignKey("question.id"))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
+
+    def __init__(self, content: str, type: str, question_id: int):
+        self.content = content
+        self.type = type
+        self.question_id = question_id
+        self.created_at = Timestamp.now()
+        self.updated_at = self.created_at
 
 
 class VoteOption(Base):
@@ -68,6 +99,14 @@ class VoteOption(Base):
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
 
+    def __init__(self, num: int, content: str, question_id: int):
+        self.num = num
+        self.content = content
+        self.count = 0
+        self.question_id = question_id
+        self.created_at = Timestamp.now()
+        self.updated_at = self.created_at
+
 
 class RandomQuestion(Base):
     __tablename__ = "random_question"
@@ -76,4 +115,10 @@ class RandomQuestion(Base):
     type = Column(String(20))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
+
+    def __init__(self, content: str, type: str):
+        self.content = content
+        self.type = type
+        self.created_at = Timestamp.now()
+        self.updated_at = self.created_at
 
