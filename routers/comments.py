@@ -133,7 +133,7 @@ def update_vote_count(vote_comment_id: int, db: Session = Depends(get_db)):
 # C-5
 # 텍스트 답변 저장
 @router.post('/text', response_model=schemas.Comment, status_code=201)
-def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
+def create_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db)):
     if len(comment.content) > 100:
         raise HTTPException(status_code=404, detail="글자수 초과")
     elif crud.get_question(db, question_id=comment.question_id) is None:
