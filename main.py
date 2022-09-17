@@ -152,7 +152,7 @@ def show_user(user_id: int, db: Session = Depends(get_db)):
 
 
 # user_id를 path variable로 받아서 해당 유저를 soft delete
-@app.delete('/api/v1/users/{user_id}', response_model=schemas.User)
+@app.delete('/api/v1/users/{user_id}', status_code=204)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     return crud.delete_user(db=db, user_id=user_id)
 
@@ -180,7 +180,6 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
     comments = crud.get_comments_by_questionid(db, question_id=question_id)
     # comments.sort(key=lambda x: x.created_at)
     return comments
-
 
 
 # D-7
@@ -389,4 +388,15 @@ def show_vote_result(question_id: int, db: Session=Depends(get_db)):
         created_at=vote_question.created_at, updated_at=updated_at)
 
     
-    
+# F-2
+# question 데이터 soft 삭제
+@app.delete('/api/v1/questions/{question_id}', status_code=204)
+def delete_question(question_id: int, db: Session=Depends(get_db)):
+    return crud.delete_question_by_question_id(db, question_id)
+
+# F-3
+# comment 데이터 hard 삭제
+@app.delete('/api/v1/comments/{comment_id}', status_code=204)
+def delete_comment(comment_id: int, db: Session=Depends(get_db)):
+    return crud.delete_comment(db, comment_id)
+

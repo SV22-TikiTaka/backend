@@ -124,12 +124,11 @@ def get_random_question(db: Session, question_type: str):
 def get_questionid(db: Session, question_id: int):
     return db.query(models.Question).filter(models.Question.id == question_id).first()
     
+    
 # question id가 일치하는 옵션 모두 리스트로 반환
 def get_vote_options(db: Session, question_id: int):
     options = db.query(models.VoteOption).filter(models.VoteOption.question_id == question_id).all()
     return options
-
-    # question id가 일치하는 옵션 객체를 리스트에 넣기
 
 
 def create_user(db: Session, user: schemas.UserCreate):
@@ -161,6 +160,7 @@ def update_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
+
 def delete_user(db: Session, user_id: int):
     db_user = db.query(models.User).filter_by(id=user_id).first()
     if db_user == None:
@@ -170,11 +170,58 @@ def delete_user(db: Session, user_id: int):
 
     db_user.is_deleted = True
     db_user.updated_at = datetime.now()
-    
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user
+
+    # 해당 user가 가진 question까지 삭제
+    delete_question_by_user_id(db, user_id)
+
+    return {}
+
+
+# question soft delete - user id로 삭제
+def delete_question_by_user_id(db: Session, user_id: int):
+    # user_id 해당되는 question데이터까지 삭제(soft)
+    db_questions = db.query(models.Question).filter_by(user_id=user_id, is_deleted=False).all()
+    
+    if db_questions == None:
+        raise HTTPException(status_code=404, detail="no questions in user data")
+    for q in db_questions:
+        q.is_deleted = True
+        q.updated_at = datetime.now()
+        db.add(q)
+        db.commit()
+        db.refresh(q)
+
+
+# question soft delete - question id로 삭제
+def delete_question_by_question_id(db: Session, question_id: int):
+    db_question = db.query(models.Question).filter_by(id=question_id).first()
+    if db_question == None:
+        raise HTTPException(status_code=404, detail="question is not found")
+    if db_question.is_deleted:
+        raise HTTPException(status_code=405, detail="question is already deleted")
+
+    db_question.is_deleted = True
+    db_question.updated_at = datetime.now()
+    db.add(db_question)
+    db.commit()
+    db.refresh(db_question)
+
+    return {}
+
+
+#comment hard delete
+def delete_comment(db: Session, comment_id: int):
+    db_comment = db.query(models.Comment).filter_by(id=comment_id).first()
+    if db_comment == None:
+        raise HTTPException(status_code=404, detail="comment is not found")
+
+    db.delete(db_comment)
+    db.commit()
+
+    return {}
     
 
 def create_question(db: Session, question: schemas.QuestionCreate):
