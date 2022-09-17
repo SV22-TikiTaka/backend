@@ -64,5 +64,5 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 # 질문 공유를 위한 url을 생성
 @router.get('/url', response_model=str)
 def get_question_url(user_id: int, question_id: int, db: Session = Depends(get_db)):
-    insta_id = crud.get_user(db, user_id=user_id).insta_id
+    username = crud.get_user(db, user_id=user_id).username
     return f'http://localhost:3000/{username}/{question_id}'
