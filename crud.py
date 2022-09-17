@@ -43,12 +43,12 @@ def get_comment(db: Session, comment_id: int):
 
 
 def get_valid_questions_by_userid(db: Session, user_id: int):
-    return db.query(models.Question).filter(models.Question.is_deleted == False) \
+    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
         .filter(models.Question.type != "vote").filter(models.Question.expired == False).all()
 
 
 def get_valid_votequestions_by_userid(db: Session, user_id: int):
-    return db.query(models.Question).filter(models.Question.is_deleted == False) \
+    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
         .filter(models.Question.type == "vote").filter(models.Question.expired == False).all()
 
 

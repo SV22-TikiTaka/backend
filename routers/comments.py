@@ -65,7 +65,7 @@ def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
 # D-9
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 투표답변들을 반환
 @router.get('/users/{user_id}/vote', response_model=List[schemas.VoteResult], status_code=200)
-def show_valid_vote_comments(user_id: int, db: Session = Depends(get_db)):
+def show_valid_vote_options(user_id: int, db: Session = Depends(get_db)):
     vote_questions = crud.get_valid_votequestions_by_userid(db, user_id=user_id)
     voteResults = []
     for question in vote_questions:
@@ -145,8 +145,12 @@ def store_comment(comment: schemas.CommentCreate, db: Session = Depends(get_db))
 # .wav 파일과 question_id를 form 데이터로 받아 해당 파일 음성 변조해 s3 bucket에 파일 저장,  url도 db에 저장
 @router.post('/voice', response_model=schemas.Comment, status_code=201)
 def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Session = Depends(get_db)):
-    if crud.get_question(db, question_id=question_id) is None:
+    question = crud.get_question(db, question_id=question_id)
+    if question is None:
         raise HTTPException(status_code=404, detail="question is not found")
+
+    if question.comment_type == "text":
+        raise HTTPException(status_code=415, detail="Unsupported comment type.")
 
     comment = crud.create_sound_comment(db, question_id=question_id)
     if comment is None:
