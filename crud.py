@@ -96,7 +96,7 @@ def get_user(db: Session, user_id: int):
     return db_user
 
 
-def get_question(db: Session, question_id: int):
+def get_question(db: Session, question_id: int) -> models.Question | None:
     return db.query(models.Question).filter(models.Question.id == question_id).first()
 
 
@@ -260,7 +260,9 @@ def create_vote_option(db: Session, question_id: int, option: List[str]):
 
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
-    db_comment = models.Comment(content=comment.content, type='text', question_id=comment.question_id)
+    if get_question_comment_type(db, comment.question_id) not in [comment_type[0], comment_type[2]]:
+        raise HTTPException(status_code=405, detail="unsupported comment_type")
+    db_comment = models.Comment(content=comment.content, type=comment_type[0], question_id=comment.question_id)
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
@@ -268,7 +270,9 @@ def create_comment(db: Session, comment: schemas.CommentCreate):
 
 
 def create_sound_comment(db: Session, question_id: int):
-    db_comment = models.Comment(content="", type='sound', question_id=question_id)
+    if get_question_comment_type(db, question_id) not in [comment_type[1], comment_type[2]]:
+        raise HTTPException(status_code=405, detail="unsupported comment_type")
+    db_comment = models.Comment(content="", type=comment_type[1], question_id=question_id)
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
@@ -283,3 +287,6 @@ def update_sound_comment(db: Session, comment_id: int, content: str):
         db.refresh(db_voice_comment)
 
     return db_voice_comment
+
+def get_question_comment_type(db: Session, question_id: int):
+    return get_question(db=db, question_id=question_id).comment_type

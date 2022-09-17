@@ -157,8 +157,8 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
     # temp 폴더 생성
-    if not os.path.exists('../temp'):
-        os.mkdir('../temp')
+    if not os.path.exists('./temp'):
+        os.mkdir('./temp')
 
     # 클라이언트에서 보낸 음성 파일 저장
     file_path = "temp/" + str(comment.id) + ".wav"
