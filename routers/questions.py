@@ -52,13 +52,7 @@ def create_vote_question(question: schemas.QuestionCreate, option: List[str], db
 
     created_question = crud.create_question(db, question=question)
 
-    if created_question is None:
-        raise HTTPException(status_code=404, detail="question creation failed")
-
     created_option = crud.create_vote_option(db, created_question.id, option)
-
-    if len(created_option) < 1:
-        raise HTTPException(status_code=404, detail="option creation failed")
 
     return {"question_id": created_question.id, "option": created_option}
 
