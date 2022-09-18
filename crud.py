@@ -96,6 +96,7 @@ def get_valid_votequestions_by_userid(db: Session, user_id: int):
         .filter(models.Question.type == "vote").filter(models.Question.expired == False).all()
 
 
+
 def get_expired_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
     return db.query(models.Question).filter(models.Question.is_deleted == False) \
         .filter(models.Question.user_id == user_id).filter(models.Question.expired == True).all()
@@ -151,15 +152,14 @@ def get_valid_questions(db: Session, question_id: int):
 
     if question.expired:  # question의 expired가 True면
         raise HTTPException(status_code=404, detail="expired Link")  # 예외발생
-    else:
-        if (datetime.now() - question.created_at).seconds / 3600 <= 24: # 24시간이 안 지났으면
-            return question # 질문 반환
-        else: # 24시간이 지났으면
-            question.expired = True # question의 expired를 False로 변경
-            db.add(question)
-            db.commit()
-            db.refresh(question)
-            raise HTTPException(status_code=404, detail="expired Link")
+    elif (datetime.now() - question.created_at).seconds / 3600 <= 24: # 24시간이 안 지났으면
+        return question # 질문 반환
+    else: # 24시간이 지났으면
+        question.expired = True # question의 expired를 False로 변경
+        db.add(question)
+        db.commit()
+        db.refresh(question)
+        raise HTTPException(status_code=404, detail="expired Link")
 
 
 def get_random_question(db: Session, question_type: str):
