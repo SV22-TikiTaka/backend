@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
+@app.on_event("startup") # 시작할 때 질문 추가하는 코드
 async def app_startup():
     await check_db_connected()
     db = SessionLocal()
