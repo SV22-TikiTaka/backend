@@ -54,7 +54,6 @@ class QuestionType(StrEnum):
 
 
 def insert_questions(db: Session):
-    QuestionType.vote
     file = open("questions.txt", "r", encoding="utf-8")
     lines = file.readlines()
     for idx, line in enumerate(lines):
