@@ -38,26 +38,26 @@ def get_comments_by_questionid(db: Session, question_id: int):
     return db.query(models.Comment).filter(models.Comment.question_id == question_id).all()
 
 
-def get_comment(db: Session, comment_id: int):
+def get_comment(db: Session, comment_id: int) -> models.Comment | None:
     return db.query(models.Comment).get(comment_id)
 
 
-def get_valid_questions_by_userid(db: Session, user_id: int):
+def get_valid_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
     return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
-        .filter(models.Question.type != "vote").filter(models.Question.expired == False).all()
+        .filter(models.Question.type != question_type[0]).filter(models.Question.expired == False).all()
 
 
-def get_valid_votequestions_by_userid(db: Session, user_id: int):
+def get_valid_votequestions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
     return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
-        .filter(models.Question.type == "vote").filter(models.Question.expired == False).all()
+        .filter(models.Question.type == question_type[0]).filter(models.Question.expired == False).all()
 
 
-def get_expired_questions_by_userid(db: Session, user_id: int):
+def get_expired_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
     return db.query(models.Question).filter(models.Question.is_deleted == False) \
         .filter(models.Question.user_id == user_id).filter(models.Question.expired == True).all()
 
 
-def get_valid_comments(db: Session, user_id: int):
+def get_valid_comments(db: Session, user_id: int, type: str) -> List[models.Comment] | None:
     valid_questions = get_valid_questions_by_userid(db, user_id)
     comments = []
     for q in valid_questions:
@@ -68,23 +68,23 @@ def get_valid_comments(db: Session, user_id: int):
             db.refresh(q)
             continue
         db_comments = get_comments_by_questionid(db, question_id=q.id)
-        comments += [c for c in db_comments if c.type == "text"]
+        comments += [c for c in db_comments if c.type == type]
     return comments
 
 
-def get_valid_soundcomments(db: Session, user_id: int):
-    valid_questions = get_valid_questions_by_userid(db, user_id)
-    comments = []
-    for q in valid_questions:
-        if (datetime.now() - q.created_at).days >= 1:
-            q.expired = True
-            db.add(q)
-            db.commit()
-            db.refresh(q)
-            continue
-        db_comments = get_comments_by_questionid(db, question_id=q.id)
-        comments += [c for c in db_comments if c.type == "sound"]
-    return comments
+# def get_valid_soundcomments(db: Session, user_id: int):
+#     valid_questions = get_valid_questions_by_userid(db, user_id)
+#     comments = []
+#     for q in valid_questions:
+#         if (datetime.now() - q.created_at).days >= 1:
+#             q.expired = True
+#             db.add(q)
+#             db.commit()
+#             db.refresh(q)
+#             continue
+#         db_comments = get_comments_by_questionid(db, question_id=q.id)
+#         comments += [c for c in db_comments if c.type == "sound"]
+#     return comments
 
 
 def get_user(db: Session, user_id: int):
@@ -111,10 +111,11 @@ def get_valid_questions(db: Session, question_id: int):
         if (datetime.now() - question.created_at).seconds / 3600 <= 24: # 24시간이 안 지났으면
             return question # 질문 반환
         else: # 24시간이 지났으면
-            raise HTTPException(status_code=404, detail="expired Link")
             question.expired = True # question의 expired를 False로 변경
+            db.add(question)
             db.commit()
             db.refresh(question)
+            raise HTTPException(status_code=404, detail="expired Link")
 
 
 def get_random_question(db: Session, question_type: str):
@@ -126,12 +127,12 @@ def get_questionid(db: Session, question_id: int):
     
     
 # question id가 일치하는 옵션 모두 리스트로 반환
-def get_vote_options(db: Session, question_id: int):
+def get_vote_options(db: Session, question_id: int) -> List[models.VoteOption] | None:
     options = db.query(models.VoteOption).filter(models.VoteOption.question_id == question_id).all()
     return options
 
 
-def create_user(db: Session, user: schemas.UserCreate):
+def create_user(db: Session, user: schemas.UserCreate) -> models.User | None:
     try:
         db_user = models.User(user)
         db.add(db_user)
@@ -145,7 +146,7 @@ def create_user(db: Session, user: schemas.UserCreate):
 def update_user(db: Session, user: schemas.UserCreate):
     db_user = db.query(models.User).filter_by(insta_id=user.insta_id).first()
     if db_user == None:
-        return 'insta_id_not_found'
+        return -1 # 'insta_id_not_found'
     db_user.username = user.username
     db_user.full_name = user.full_name
     db_user.follower = user.follower
@@ -185,7 +186,7 @@ def delete_question_by_user_id(db: Session, user_id: int):
     db_questions = db.query(models.Question).filter_by(user_id=user_id, is_deleted=False).all()
     
     if db_questions == None:
-        raise HTTPException(status_code=404, detail="no questions in user data")
+        return
     for q in db_questions:
         q.is_deleted = True
         q.updated_at = datetime.now()
@@ -219,6 +220,7 @@ def delete_comment(db: Session, comment_id: int):
 
     db.delete(db_comment)
     db.commit()
+    db.refresh(db_comment)
 
     return {}
     
@@ -234,7 +236,7 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     return db_question
 
 
-def update_vote_count(db: Session, vote_option_id: int):
+def update_vote_count(db: Session, vote_option_id: int) -> models.VoteOption | None:
     db_vote_option = db.query(models.VoteOption).filter_by(id=vote_option_id).first()
     if db_vote_option == None:
         raise HTTPException(status_code=404, detail="vote_option not found")
@@ -259,7 +261,7 @@ def create_vote_option(db: Session, question_id: int, option: List[str]):
     return created_option
 
 
-def create_comment(db: Session, comment: schemas.CommentCreate):
+def create_comment(db: Session, comment: schemas.CommentCreate) -> models.Comment | None:
     if get_question_comment_type(db, comment.question_id) not in [comment_type[0], comment_type[2]]:
         raise HTTPException(status_code=405, detail="unsupported comment_type")
     db_comment = models.Comment(content=comment.content, type=comment_type[0], question_id=comment.question_id)
@@ -273,6 +275,8 @@ def create_sound_comment(db: Session, question_id: int):
     if get_question_comment_type(db, question_id) not in [comment_type[1], comment_type[2]]:
         raise HTTPException(status_code=405, detail="unsupported comment_type")
     db_comment = models.Comment(content="", type=comment_type[1], question_id=question_id)
+    if db_comment is None:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)

@@ -1,6 +1,7 @@
 # main.py
 # 서버 시작과 API들을 관리하는 파일?
 
+from os import access
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from starlette.responses import RedirectResponse
@@ -59,7 +60,7 @@ def go_to_authorize_page():
 # A-2
 # 장기 토큰을 리프레쉬 하여 반환. 만료된 토큰이면 A-1 API로 리디렉션된다.
 # 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출
-@app.get("/api/v1/refresh_token")
+@app.get("/api/v1/refresh-token")
 def get_refresh_token(long_access_token: str):
     res = insta.get_refresh_token(long_access_token=long_access_token)
     # 토큰이 만료되었다면
