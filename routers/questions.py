@@ -68,11 +68,11 @@ def create_vote_question(question: schemas.QuestionCreate, option: List[str], db
 @router.post('/', response_model=schemas.Question, status_code=201)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
     # 타입 검사
-    if question.type not in crud.question_type:
+    if not crud.QuestionType.check_vaild_question_type(question.type):
         raise HTTPException(status_code=415, detail="unsupported question type")
-    if crud.question_type == "vote":
+    if question.type == crud.QuestionType.vote:
         raise HTTPException(status_code=415, detail="unsupported question type")
-    if question.comment_type not in crud.comment_type:
+    if not crud.CommentType.check_vaild_comment_type(question.comment_type):
         raise HTTPException(status_code=415, detail="unsupported comment type")
 
     # 글자수 제한 검사

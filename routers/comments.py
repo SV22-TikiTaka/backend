@@ -50,7 +50,7 @@ def delete_comment(comment_id: int, db: Session = Depends(get_db)):
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 답변들을 반환
 @router.get('/users/{user_id}/text', response_model=List[schemas.Comment], status_code=200)
 def show_valid_comments(user_id: int, db: Session = Depends(get_db)):
-    comments = crud.get_valid_comments(db, user_id=user_id, type="text")
+    comments = crud.get_valid_comments(db, user_id=user_id, type=crud.CommentType.text)
     return comments
 
 
@@ -58,7 +58,7 @@ def show_valid_comments(user_id: int, db: Session = Depends(get_db)):
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 음성답변들을 반환
 @router.get('/users/{user_id}/sound', response_model=List[schemas.Comment], status_code=200)
 def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
-    comments = crud.get_valid_comments(db, user_id=user_id, type="sound")
+    comments = crud.get_valid_comments(db, user_id=user_id, type=crud.CommentType.sound)
     return comments
 
 
@@ -101,7 +101,7 @@ def show_comments(question_id: int, db: Session = Depends(get_db)):
 @router.get('/vote/{question_id}', response_model=schemas.VoteResult, status_code=200)
 def show_vote_result(question_id: int, db: Session = Depends(get_db)):
     vote_question = crud.get_question(db, question_id=question_id)
-    if vote_question.type != crud.question_type[0]:
+    if vote_question.type != crud.QuestionType.vote:
         raise HTTPException(status_code=404, detail="not vote question")
     vote_options = crud.get_vote_options(db, question_id)
     vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
@@ -151,7 +151,7 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
     if question is None:
         raise HTTPException(status_code=404, detail="question is not found")
 
-    if question.comment_type == crud.comment_type[0]:
+    if question.comment_type == crud.CommentType.text:
         raise HTTPException(status_code=415, detail="Unsupported comment type.")
 
     comment = crud.create_sound_comment(db, question_id=question_id)
