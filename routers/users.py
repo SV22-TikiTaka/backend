@@ -17,7 +17,7 @@ router = APIRouter(
 # 토큰 발급 및 리프레쉬 후 호출
 # 또는 링크 생성 시 user 정보 업데이트를 위해 호출
 # 프론트에서는 나중에 user 정보 조회를 위해 user_id 로컬에 저장하기
-@router.post("/by_access_token")
+@router.put("/by-access-token")
 def user_info_change_by_access_token(access_token: str, db: Session = Depends(get_db)):
     # 엑세스 토큰으로 user 정보 가져옴
     user_info = insta.get_user_info(access_token=access_token)
@@ -26,7 +26,7 @@ def user_info_change_by_access_token(access_token: str, db: Session = Depends(ge
     res = update_user(user=user_info, db=db)
 
     # user 업데이트 실패시 user 생성
-    if res == 'insta_id_not_found':
+    if res == -1:
         return create_user(user=user_info, db=db)
     else:
         return res
