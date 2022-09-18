@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 import sys, os
@@ -18,11 +18,13 @@ router = APIRouter(
 # 또는 링크 생성 시 user 정보 업데이트를 위해 호출
 # 프론트에서는 나중에 user 정보 조회를 위해 user_id 로컬에 저장하기
 @router.put("/by-access-token")
-def user_info_change_by_access_token(access_token: str, db: Session = Depends(get_db)):
+def user_info_change_by_access_token(access_token: str = Header(default=None), db: Session = Depends(get_db)):
     # 엑세스 토큰으로 user 정보 가져옴
     user_info = insta.get_user_info(access_token=access_token)
+    if user_info is None:
+        raise HTTPException(status_code=421, detail="access_token is not valid")
 
-    # user 업데이트 시도, 성공시 user반환, 실패시 insta_id_not_found 반환
+    # user 업데이트 시도, 성공시 user반환, 실패시 -1 반환
     res = update_user(user=user_info, db=db)
 
     # user 업데이트 실패시 user 생성
