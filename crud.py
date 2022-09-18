@@ -1,5 +1,6 @@
 # crud.py
 # db에 직접 접근하여 create, read, update, delete 하는 함수를 관리하는 파일
+from __future__ import annotations
 
 from typing import List
 from sqlalchemy.orm import Session
@@ -83,14 +84,16 @@ def get_comment(db: Session, comment_id: int) -> models.Comment | None:
     return db.query(models.Comment).get(comment_id)
 
 
-def get_valid_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
-    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
-        .filter(models.Question.type != QuestionType.vote).filter(models.Question.expired == False).all()
+def get_valid_questions_by_userid(db: Session, user_id: int):
+    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(
+        models.Question.is_deleted == False) \
+        .filter(models.Question.type != "vote").filter(models.Question.expired == False).all()
 
 
-def get_valid_votequestions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
-    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
-        .filter(models.Question.type == QuestionType.vote).filter(models.Question.expired == False).all()
+def get_valid_votequestions_by_userid(db: Session, user_id: int):
+    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(
+        models.Question.is_deleted == False) \
+        .filter(models.Question.type == "vote").filter(models.Question.expired == False).all()
 
 
 def get_expired_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
@@ -146,8 +149,8 @@ def get_valid_questions(db: Session, question_id: int):
     if question is None:
         raise HTTPException(status_code=404, detail="Question is not found")
 
-    if question.expired: # question의 expired가 True면
-        raise HTTPException(status_code=404, detail="expired Link") # 예외발생
+    if question.expired:  # question의 expired가 True면
+        raise HTTPException(status_code=404, detail="expired Link")  # 예외발생
     else:
         if (datetime.now() - question.created_at).seconds / 3600 <= 24: # 24시간이 안 지났으면
             return question # 질문 반환
@@ -163,10 +166,6 @@ def get_random_question(db: Session, question_type: str):
     return db.query(models.RandomQuestion).filter(models.RandomQuestion.type == question_type).all()
 
 
-def get_questionid(db: Session, question_id: int):
-    return db.query(models.Question).filter(models.Question.id == question_id).first()
-    
-    
 # question id가 일치하는 옵션 모두 리스트로 반환
 def get_vote_options(db: Session, question_id: int) -> List[models.VoteOption] | None:
     options = db.query(models.VoteOption).filter(models.VoteOption.question_id == question_id).all()
@@ -183,6 +182,7 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User | None:
     except Exception as ex:
         print(ex)
         return ex
+
 
 def update_user(db: Session, user: schemas.UserCreate):
     db_user = db.query(models.User).filter_by(insta_id=user.insta_id).first()
@@ -225,7 +225,7 @@ def delete_user(db: Session, user_id: int):
 def delete_question_by_user_id(db: Session, user_id: int):
     # user_id 해당되는 question데이터까지 삭제(soft)
     db_questions = db.query(models.Question).filter_by(user_id=user_id, is_deleted=False).all()
-    
+
     if db_questions == None:
         return
     for q in db_questions:
@@ -239,7 +239,7 @@ def delete_question_by_user_id(db: Session, user_id: int):
 # question soft delete - question id로 삭제
 def delete_question_by_question_id(db: Session, question_id: int):
     db_question = db.query(models.Question).filter_by(id=question_id).first()
-    if db_question == None:
+    if db_question is None:
         raise HTTPException(status_code=404, detail="question is not found")
     if db_question.is_deleted:
         raise HTTPException(status_code=405, detail="question is already deleted")
@@ -253,10 +253,10 @@ def delete_question_by_question_id(db: Session, question_id: int):
     return {}
 
 
-#comment hard delete
+# comment hard delete
 def delete_comment(db: Session, comment_id: int):
     db_comment = db.query(models.Comment).filter_by(id=comment_id).first()
-    if db_comment == None:
+    if db_comment is None:
         raise HTTPException(status_code=404, detail="comment is not found")
 
     db.delete(db_comment)
@@ -264,13 +264,35 @@ def delete_comment(db: Session, comment_id: int):
     db.refresh(db_comment)
 
     return {}
-    
 
+
+# def create_question(db: Session, question: schemas.QuestionCreate):
+#     db_question = models.Question(question)
+#     db_question.user_id
+#
+#     if db_question is None:
+#         raise HTTPException(status_code=404, detail="Non Existent Question")
+#
+#     elif db_question.type not in question_type:
+#         raise HTTPException(status_code=415, detail="unsupported question type")
+#
+#     db.add(db_question)
+#     db.commit()
+#     db.refresh(db_question)
+#     return db_question
+
+# 유효성 검사 추가
 def create_question(db: Session, question: schemas.QuestionCreate):
+    if get_user(db=db, user_id=question.user_id) is None:  # user_id 존재여부 검사
+        raise HTTPException(status_code=404, detail="Non existent ID")
     if(QuestionType.check_vaild_question_type(question.type)):
         db_question = models.Question(question)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
+
+    if len(question.content) >= 40:  # content 길이 검사
+        raise HTTPException(status_code=404, detail="글자수 초과")
+
     db.add(db_question)
     db.commit()
     db.refresh(db_question)
@@ -279,7 +301,7 @@ def create_question(db: Session, question: schemas.QuestionCreate):
 
 def update_vote_count(db: Session, vote_option_id: int) -> models.VoteOption | None:
     db_vote_option = db.query(models.VoteOption).filter_by(id=vote_option_id).first()
-    if db_vote_option == None:
+    if db_vote_option is None:
         raise HTTPException(status_code=404, detail="vote_option not found")
     db_vote_option.count += 1
     db_vote_option.updated_at = datetime.now()
@@ -292,6 +314,10 @@ def update_vote_count(db: Session, vote_option_id: int) -> models.VoteOption | N
 # 투표 질문 선택지 생성
 def create_vote_option(db: Session, question_id: int, option: List[str]):
     created_option = []
+
+    if get_question(db=db, question_id=question_id) is None:
+        raise HTTPException(status_code=404, detail="Non existent Question")
+
     for i in range(0, len(option)):  # 옵션의 개수만큼 vote comment에 저장
         db_vote_option = models.VoteOption(num=i + 1, content=option[i], question_id=question_id)
         db.add(db_vote_option)
@@ -332,6 +358,7 @@ def update_sound_comment(db: Session, comment_id: int, content: str):
         db.refresh(db_voice_comment)
 
     return db_voice_comment
+
 
 def get_question_comment_type(db: Session, question_id: int):
     return get_question(db=db, question_id=question_id).comment_type
