@@ -51,10 +51,8 @@ def create_vote_question(question: schemas.QuestionCreate, option: List[str], db
         raise HTTPException(status_code=415, detail="number of options out of range")
 
     created_question = crud.create_question(db, question=question)
-    created_option = crud.create_vote_option(db, created_question.id, option)
 
-    # if len(created_option) < 1:
-    #     raise HTTPException(status_code=404, detail="option creation failed")
+    created_option = crud.create_vote_option(db, created_question.id, option)
 
     return {"question_id": created_question.id, "option": created_option}
 
@@ -78,6 +76,8 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
     return crud.create_question(db, question=question)
 
 
+# D-10
+# inbox에서 question 상세보기
 @router.get('/{question_id}', response_model=schemas.Question, status_code=200)
 def get_question(question_id: int,  db: Session = Depends(get_db)):
     question = crud.get_question(db, question_id=question_id)
@@ -90,9 +90,8 @@ def get_question(question_id: int,  db: Session = Depends(get_db)):
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
 @router.get('/history/{user_id}', response_model=List[schemas.Question], status_code=200)
 def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
-    user = crud.get_user(db, user_id=user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="user is not found")
+    # user 존재 확인
+    crud.get_user(db, user_id=user_id)
 
     questions = crud.get_expired_questions_by_userid(db, user_id=user_id)
     return questions

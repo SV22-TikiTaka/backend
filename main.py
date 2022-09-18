@@ -1,8 +1,9 @@
 # main.py
 # 서버 시작과 API들을 관리하는 파일?
 
+from os import access
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from starlette.responses import RedirectResponse
 
 from starlette.middleware.cors import CORSMiddleware
@@ -59,13 +60,16 @@ def go_to_authorize_page():
 # A-2
 # 장기 토큰을 리프레쉬 하여 반환. 만료된 토큰이면 A-1 API로 리디렉션된다.
 # 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출
-@app.get("/api/v1/refresh_token")
-def get_refresh_token(long_access_token: str):
+@app.get("/api/v1/refresh-token", status_code=200)
+def get_refresh_token(long_access_token: str = Header(default=None)):
     res = insta.get_refresh_token(long_access_token=long_access_token)
     # 토큰이 만료되었다면
-    if res['expires_in'] < 30:
+    if res == -1:
         go_to_authorize_page()
-    return res
+
+    elif res['expires_in'] < 30:
+        go_to_authorize_page()
+    else: return res
 
 
 # A-8
@@ -76,11 +80,11 @@ def get_refresh_token(long_access_token: str):
 def get_insta_code(code=None, error=None, error_description=None):
     # 인증 실패 시
     if error is not None:
-        raise HTTPException(status_code=404, detail=error_description)
+        raise HTTPException(status_code=421, detail=error_description)
         # 적절한 페이지로 이동시키기
     # 코드가 없으면
     if code is None:
-        raise HTTPException(status_code=404, detail="code is not found")
+        raise HTTPException(status_code=421, detail="code is not found")
     # 단기 실행 토큰 발급
     short_token = insta.get_short_token(code)
     # 장기 실행 토큰 발급

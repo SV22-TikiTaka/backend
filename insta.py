@@ -50,7 +50,11 @@ def get_long_token(short_access_token: str):
 
 
 def get_refresh_token(long_access_token: str):
-    return requests.get(refresh_token_url+long_access_token).json()
+    try:
+        refresh_token = requests.get(refresh_token_url+long_access_token).json()
+        return refresh_token
+    except Exception as ex:
+        return -1
 
 
 # 엑세스 토큰으로 user info 반환
