@@ -6,11 +6,51 @@ from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from datetime import datetime
+from enum import Enum, auto
 
 import models, schemas
 
-question_type = ["vote", "challenge", "normal"]
-comment_type = ["text", "sound", "anything"]
+# StrEnum을 상속받으면 CommentType.text 가 그대로 "text" 가 됨
+class StrEnum(str, Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
+class CommentType(StrEnum):
+    ''' 질문의 답변타입 열겨형 변수 '''
+    text = auto()
+    sound = auto()
+    anything = auto()
+    def check_vaild_comment_type(type_name: str):
+        ''' 입력받은 타입이 있는 타입이면 TRUE, 아니면 FALSE '''
+        try:
+            return CommentType[type_name] != None
+        except:
+            return False
+    def compare_two_type(input_type: str, check_type: str):
+        ''' input_type이 check_type이나 anything이면 true 아니면 FALSE '''
+        try:
+            return input_type in [CommentType[check_type], CommentType.anything]
+        except:
+            return False
+
+class QuestionType(StrEnum):
+    ''' 질문타입 열겨형 변수 '''
+    vote = auto()
+    challenge = auto()
+    normal = auto()
+    def check_vaild_question_type(type_name: str):
+        ''' 입력받은 타입이 있는 타입이면 TRUE, 아니면 FALSE '''
+        try:
+            return QuestionType[type_name] != None
+        except:
+            return False
+
 
 
 def insert_questions(db: Session):
@@ -45,12 +85,12 @@ def get_comment(db: Session, comment_id: int) -> models.Comment | None:
 
 def get_valid_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
     return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
-        .filter(models.Question.type != question_type[0]).filter(models.Question.expired == False).all()
+        .filter(models.Question.type != QuestionType.vote).filter(models.Question.expired == False).all()
 
 
 def get_valid_votequestions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
     return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
-        .filter(models.Question.type == question_type[0]).filter(models.Question.expired == False).all()
+        .filter(models.Question.type == QuestionType.vote).filter(models.Question.expired == False).all()
 
 
 
@@ -243,9 +283,9 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     if get_user(db=db, user_id=question.user_id) is None:  # user_id 존재여부 검사
         raise HTTPException(status_code=404, detail="Non existent ID")
 
-    db_question = models.Question(question)
-
-    if question.type not in question_type:  # question type 검사
+    if(QuestionType.check_vaild_question_type(question.type)):
+        db_question = models.Question(question)
+    else:
         raise HTTPException(status_code=415, detail="unsupported question type")
 
     if len(question.content) >= 40:  # content 길이 검사
@@ -287,9 +327,9 @@ def create_vote_option(db: Session, question_id: int, option: List[str]):
 
 
 def create_comment(db: Session, comment: schemas.CommentCreate) -> models.Comment | None:
-    if get_question_comment_type(db, comment.question_id) not in [comment_type[0], comment_type[2]]:
+    if not CommentType.compare_two_type(get_question_comment_type(db, comment.question_id), CommentType.text):
         raise HTTPException(status_code=405, detail="unsupported comment_type")
-    db_comment = models.Comment(content=comment.content, type=comment_type[0], question_id=comment.question_id)
+    db_comment = models.Comment(content=comment.content, type=CommentType.text, question_id=comment.question_id)
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
@@ -297,9 +337,9 @@ def create_comment(db: Session, comment: schemas.CommentCreate) -> models.Commen
 
 
 def create_sound_comment(db: Session, question_id: int):
-    if get_question_comment_type(db, question_id) not in [comment_type[1], comment_type[2]]:
+    if not CommentType.compare_two_type(get_question_comment_type(db, question_id), CommentType.sound):
         raise HTTPException(status_code=405, detail="unsupported comment_type")
-    db_comment = models.Comment(content="", type=comment_type[1], question_id=question_id)
+    db_comment = models.Comment(content="", type=CommentType.sound, question_id=question_id)
     if db_comment is None:
         raise HTTPException(status_code=500, detail="Internal Server Error")
     db.add(db_comment)
