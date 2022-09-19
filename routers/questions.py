@@ -5,10 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import sys, os
+
+import models
+
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import schemas, crud
 from database import get_db
-
 
 router = APIRouter(
     prefix="/api/v1/questions",
@@ -32,7 +34,7 @@ def show_random_question(type: str, db: Session = Depends(get_db)):
 # F-2
 # question 데이터 soft 삭제
 @router.delete('/{question_id}', status_code=204)
-def delete_question(question_id: int, db: Session=Depends(get_db)):
+def delete_question(question_id: int, db: Session = Depends(get_db)):
     return crud.delete_question_by_question_id(db, question_id)
 
 
@@ -41,10 +43,10 @@ def delete_question(question_id: int, db: Session=Depends(get_db)):
 @router.post('/vote/', status_code=201)
 def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
     # 글자수 제한 검사
-    if len(question.content) > 20:
+    if len(question.content) > models.word_limit["Question_content_limit"]:
         raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
     for op in option:
-        if len(op) > 10:
+        if len(op) > models.word_limit["Vote_option_limit"]:
             raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
 
     if not 2 <= len(option) <= 4:
@@ -70,7 +72,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
         raise HTTPException(status_code=415, detail="unsupported comment type")
 
     # 글자수 제한 검사
-    if len(question.content) > 40:
+    if len(question.content) > models.word_limit["Question_content_limit"]:
         raise HTTPException(status_code=415, detail="exceeded length limit - question: 40")
 
     return crud.create_question(db, question=question)
@@ -79,7 +81,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # D-10
 # inbox에서 question 상세보기
 @router.get('/{question_id}', response_model=schemas.Question, status_code=200)
-def get_question(question_id: int,  db: Session = Depends(get_db)):
+def get_question(question_id: int, db: Session = Depends(get_db)):
     question = crud.get_question(db, question_id=question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="question is not found")
@@ -102,6 +104,3 @@ def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
 @router.get('/url', response_model=schemas.Question)
 def get_question_from_url(question_id: int, db: Session = Depends(get_db)):
     return crud.get_valid_questions(db=db, question_id=question_id)
-
-
-

@@ -10,15 +10,17 @@ from database import Base
 import schemas
 
 metadata = MetaData()
+word_limit = {"User_name_limit": 30, "Question_content_limit": 40, "Comment_content_limit": 100,
+              "Vote_option_limit": 10}
 
 
 class User(Base):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    insta_id = Column(String(30), unique=True) # 인스타 에서 관리하는 숫자형태의 id, user 구분을 위해 사용
-    username = Column(String(30)) # 인스타 id 길이 제한이 30자 라서 수정
-    full_name = Column(String(30))
+    insta_id = Column(String(word_limit["User_name_limit"]), unique=True) # 인스타 에서 관리하는 숫자형태의 id, user 구분을 위해 사용
+    username = Column(String(word_limit["User_name_limit"])) # 인스타 id 길이 제한이 30자 라서 수정
+    full_name = Column(String(word_limit["User_name_limit"]))
     follower = Column(Integer)
     following = Column(Integer)
     profile_image_url = Column(String(500)) # 제 url 길이가 440자라서 여유있게 했습니다
@@ -47,7 +49,7 @@ class Question(Base):
     __tablename__ = "question"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(String(40))
+    content = Column(String(word_limit["Question_content_limit"]))
     user_id = Column(Integer, ForeignKey("user.id"))
     type = Column(String(20))
     comment_type = Column(String(20))
@@ -75,7 +77,7 @@ class Comment(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     type = Column(String(20))
-    content = Column(String(100))
+    content = Column(String(word_limit["Comment_content_limit"]))
     question_id = Column(Integer, ForeignKey("question.id"))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
@@ -93,7 +95,7 @@ class VoteOption(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     num = Column(Integer)
-    content = Column(String(10))
+    content = Column(String(word_limit["Vote_option_limit"]))
     count = Column(Integer)
     question_id = Column(Integer, ForeignKey("question.id"))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
@@ -111,7 +113,7 @@ class VoteOption(Base):
 class RandomQuestion(Base):
     __tablename__ = "random_question"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(String(40))
+    content = Column(String(word_limit["Question_content_limit"]))
     type = Column(String(20))
     created_at = Column(TIMESTAMP, default=Timestamp.now())
     updated_at = Column(TIMESTAMP, default=Timestamp.now())
@@ -121,4 +123,3 @@ class RandomQuestion(Base):
         self.type = type
         self.created_at = Timestamp.now()
         self.updated_at = self.created_at
-
