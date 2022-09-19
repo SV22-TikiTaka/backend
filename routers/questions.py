@@ -88,9 +88,14 @@ def create_vote_question(content: str, user_id: int, option: List[str], db: Sess
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @router.post('/', response_model=schemas.Question, status_code=201)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == question.user_id)
+
     # user_id check
-    if db.query(models.Question).filter(models.Question.user_id == question.user_id) is None:
+    if user is None:
         raise HTTPException(status_code=404, detail="User_ID is not found")
+    # user_id는 있지만 is_delete가 True인 경우
+    elif user.is_delete:
+        raise HTTPException(status_code=404, detail="Deleted User_ID")
 
     # 타입 검사
     if not crud.QuestionType.check_vaild_question_type(question.type):
