@@ -40,40 +40,23 @@ def delete_question(question_id: int, db: Session = Depends(get_db)):
 
 # B-10
 # 투표 질문 저장
-# @router.post('/vote/', status_code=201)
-# def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
-#     # 글자수 제한 검사
-#     if len(question.content) > 20:
-#         raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
-#     for op in option:
-#         if len(op) > 10:
-#             raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
-#
-#     if not 2 <= len(option) <= 4:
-#         raise HTTPException(status_code=415, detail="number of options out of range")
-#
-#     created_question = crud.create_question(db, question=question)
-#
-#     created_option = crud.create_vote_option(db, created_question.id, option)
-#
-#     return {"question_id": created_question.id, "option": created_option}
-
-
 @router.post('/vote/', status_code=201)
-def create_vote_question(content: str, user_id: int, option: List[str], db: Session = Depends(get_db)):
-    question = schemas.QuestionCreate
-    question.content = content
-    question.type = "vote"
-    question.user_id = user_id
-    question.comment_type = "text"
+def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == question.user_id)
+
+    # user_id check
+    if user is None:
+        raise HTTPException(status_code=404, detail="User_ID is not found")
+    # user_id는 있지만 is_delete가 True인 경우
+    elif user.is_delete:
+        raise HTTPException(status_code=404, detail="Deleted User_ID")
 
     # 글자수 제한 검사
-    if len(content) > 20:
+    if len(question.content) > 20:
         raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
     for op in option:
         if len(op) > 10:
             raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
-
     if not 2 <= len(option) <= 4:
         raise HTTPException(status_code=415, detail="number of options out of range")
 
