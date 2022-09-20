@@ -45,6 +45,10 @@ def create_vote_question(question: schemas.QuestionCreate, option: List[str], db
     # 글자수 제한 검사
     if len(question.content) > models.word_limit["Question_content_limit"]:
         raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
+
+    if len(option) < 1:
+        raise HTTPException(status_code=415, detail="Make more options")
+
     for op in option:
         if len(op) > models.word_limit["Vote_option_limit"]:
             raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")

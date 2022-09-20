@@ -8,6 +8,7 @@ from fastapi import APIRouter, UploadFile, Form, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import sys, os
+
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import schemas, crud, voice_alteration
 from database import get_db
@@ -67,9 +68,15 @@ def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
 @router.get('/users/{user_id}/vote', response_model=List[schemas.VoteResult], status_code=200)
 def show_valid_vote_options(user_id: int, db: Session = Depends(get_db)):
     vote_questions = crud.get_valid_votequestions_by_userid(db, user_id=user_id)
+    # user_id check
+    if len(vote_questions) < 1:
+        raise HTTPException(status_code=404, detail="Non Existent user_id")
+
     voteResults = []
     for question in vote_questions:
         vote_options = crud.get_vote_options(db, question.id)
+        if len(vote_options) < 1:
+            raise HTTPException(status_code=404, detail="Empty vote option")
         vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
         vote_count = [vote_options[i].count for i in range(len(vote_options))]
 
