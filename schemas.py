@@ -67,6 +67,15 @@ class RandomQuestion(BaseModel):
         orm_mode = True
 
 
+class BaseVote(BaseModel):
+    content: str
+    user_id: int
+
+
+class VoteCreate(BaseVote):
+    option: List[str]
+
+
 class BaseComment(BaseModel):
     content: str
     question_id: int

@@ -5,12 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import sys, os
-
-import models
-
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import schemas, crud
 from database import get_db
+
 
 router = APIRouter(
     prefix="/api/v1/questions",
@@ -34,43 +32,35 @@ def show_random_question(type: str, db: Session = Depends(get_db)):
 # F-2
 # question 데이터 soft 삭제
 @router.delete('/{question_id}', status_code=204)
-def delete_question(question_id: int, db: Session = Depends(get_db)):
+def delete_question(question_id: int, db: Session=Depends(get_db)):
     return crud.delete_question_by_question_id(db, question_id)
 
 
 # B-10
 # 투표 질문 저장
 @router.post('/vote/', status_code=201)
-def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
-
+def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Depends(get_db)):
     # 글자수 제한 검사
-    if len(question.content) > models.word_limit["Question_content_limit"]:
+    if len(vote_with_option.content) > 20:
         raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
-    for op in option:
-        if len(op) > models.word_limit["Vote_option_limit"]:
+    for op in vote_with_option.option:
+        if len(op) > 10:
             raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
 
-     created_question = crud.create_question(db, question=question)
+    if not 2 <= len(vote_with_option.option) <= 4:
+        raise HTTPException(status_code=415, detail="number of options out of range")
 
-     created_option = crud.create_vote_option(db, created_question.id, option)
+    vote_question = schemas.BaseVote(content=vote_with_option.content, user_id=vote_with_option.user_id)
+    created_question = crud.create_vote_question(db, vote_question=vote_question)
+    created_option = crud.create_vote_option(db, created_question.id, vote_with_option.option)
 
-     return {"question_id": created_question.id, "option": created_option}
-
+    return {"question_id": created_question.id, "option": created_option}
 
 
 # B-9
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @router.post('/', response_model=schemas.Question, status_code=201)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == question.user_id)
-
-    # user_id check
-    if user is None:
-        raise HTTPException(status_code=404, detail="User_ID is not found")
-    # user_id는 있지만 is_delete가 True인 경우
-    elif user.is_delete:
-        raise HTTPException(status_code=404, detail="Deleted User_ID")
-
     # 타입 검사
     if not crud.QuestionType.check_vaild_question_type(question.type):
         raise HTTPException(status_code=415, detail="unsupported question type")
@@ -80,7 +70,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
         raise HTTPException(status_code=415, detail="unsupported comment type")
 
     # 글자수 제한 검사
-    if len(question.content) > models.word_limit["Question_content_limit"]:
+    if len(question.content) > 40:
         raise HTTPException(status_code=415, detail="exceeded length limit - question: 40")
 
     return crud.create_question(db, question=question)
@@ -89,7 +79,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # D-10
 # inbox에서 question 상세보기
 @router.get('/{question_id}', response_model=schemas.Question, status_code=200)
-def get_question(question_id: int, db: Session = Depends(get_db)):
+def get_question(question_id: int,  db: Session = Depends(get_db)):
     question = crud.get_question(db, question_id=question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="question is not found")
@@ -112,3 +102,6 @@ def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
 @router.get('/url', response_model=schemas.Question)
 def get_question_from_url(question_id: int, db: Session = Depends(get_db)):
     return crud.get_valid_questions(db=db, question_id=question_id)
+
+
+

@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 
 from database import Base
 
-import schemas
+import schemas, crud
 
 metadata = MetaData()
 word_limit = {"User_name_limit": 30, "Question_content_limit": 40, "Comment_content_limit": 100,
@@ -64,8 +64,18 @@ class Question(Base):
     def __init__(self, question: schemas.QuestionCreate):
         self.content = question.content
         self.user_id = question.user_id
-        self.type = question.type
-        self.comment_type = question.comment_type
+        self.type = crud.QuestionType.vote
+        self.comment_type = crud.CommentType.vote
+        self.expired = False
+        self.is_deleted = False
+        self.created_at = Timestamp.now()
+        self.updated_at = self.created_at
+
+    def __init__(self, question: schemas.VoteCreate, is_vote: int):
+        self.content = question.content
+        self.user_id = question.user_id
+        self.type = crud.QuestionType.vote
+        self.comment_type = crud.CommentType.vote
         self.expired = False
         self.is_deleted = False
         self.created_at = Timestamp.now()
