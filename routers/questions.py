@@ -42,10 +42,10 @@ def delete_question(question_id: int, db: Session=Depends(get_db)):
 def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Depends(get_db)):
     # 글자수 제한 검사
     if len(vote_with_option.content) > models.word_limit["Vote_content_limit"]:
-        raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
+        raise HTTPException(status_code=415, detail="exceeded length limit - vote question")
     for op in vote_with_option.option:
         if len(op) > models.word_limit["Vote_option_limit"]:
-            raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
+            raise HTTPException(status_code=415, detail="exceeded length limit - vote option")
 
     if not models.word_limit["Min_option_count"] <= len(vote_with_option.option) <= models.word_limit["Max_option_count"]:
         raise HTTPException(status_code=415, detail="number of options out of range")
@@ -71,7 +71,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 
     # 글자수 제한 검사
     if len(question.content) > models.word_limit["Question_content_limit"]:
-        raise HTTPException(status_code=415, detail="exceeded length limit - question: 40")
+        raise HTTPException(status_code=415, detail="exceeded length limit")
 
     return crud.create_question(db, question=question)
 
