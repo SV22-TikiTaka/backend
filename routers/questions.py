@@ -5,12 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import sys, os
-
-import models
-
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import schemas, crud
+import schemas, crud, models
 from database import get_db
+
 
 router = APIRouter(
     prefix="/api/v1/questions",
@@ -34,23 +32,28 @@ def show_random_question(type: str, db: Session = Depends(get_db)):
 # F-2
 # question 데이터 soft 삭제
 @router.delete('/{question_id}', status_code=204)
-def delete_question(question_id: int, db: Session = Depends(get_db)):
+def delete_question(question_id: int, db: Session=Depends(get_db)):
     return crud.delete_question_by_question_id(db, question_id)
 
 
 # B-10
 # 투표 질문 저장
 @router.post('/vote/', status_code=201)
-def create_vote_question(question: schemas.QuestionCreate, option: List[str], db: Session = Depends(get_db)):
-    # 글자수 제한 검사
-    if len(question.content) > models.word_limit["Question_content_limit"]:
-        raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
-    for op in option:
-        if len(op) > models.word_limit["Vote_option_limit"]:
-            raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
 
-    created_question = crud.create_question(db, question=question)
-    created_option = crud.create_vote_option(db, created_question.id, option)
+def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Depends(get_db)):
+    # 글자수 제한 검사
+    if len(vote_with_option.content) > models.word_limit["Vote_content_limit"]:
+        raise HTTPException(status_code=415, detail="exceeded length limit - vote question")
+    for op in vote_with_option.option:
+        if len(op) > models.word_limit["Vote_option_limit"]:
+            raise HTTPException(status_code=415, detail="exceeded length limit - vote option")
+
+    if not models.word_limit["Min_option_count"] <= len(vote_with_option.option) <= models.word_limit["Max_option_count"]:
+        raise HTTPException(status_code=415, detail="number of options out of range")
+
+    vote_question = schemas.BaseVote(content=vote_with_option.content, user_id=vote_with_option.user_id)
+    created_question = crud.create_vote_question(db, vote_question=vote_question)
+    created_option = crud.create_vote_option(db, created_question.id, vote_with_option.option)
 
     return {"question_id": created_question.id, "option": created_option}
 
@@ -70,7 +73,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 
     # 글자수 제한 검사
     if len(question.content) > models.word_limit["Question_content_limit"]:
-        raise HTTPException(status_code=415, detail="exceeded length limit - question: 40")
+        raise HTTPException(status_code=415, detail="exceeded length limit")
 
     return crud.create_question(db, question=question)
 
@@ -78,7 +81,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # D-10
 # inbox에서 question 상세보기
 @router.get('/{question_id}', response_model=schemas.Question, status_code=200)
-def get_question(question_id: int, db: Session = Depends(get_db)):
+def get_question(question_id: int,  db: Session = Depends(get_db)):
     question = crud.get_question(db, question_id=question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="question is not found")
@@ -101,3 +104,6 @@ def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
 @router.get('/url', response_model=schemas.Question)
 def get_question_from_url(question_id: int, db: Session = Depends(get_db)):
     return crud.get_valid_questions(db=db, question_id=question_id)
+
+
+
