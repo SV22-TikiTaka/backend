@@ -280,15 +280,9 @@ def delete_comment(db: Session, comment_id: int):
 
 # 유효성 검사 추가
 def create_question(db: Session, question: schemas.QuestionCreate):
-    user = db.query(models.User).filter(models.User.id == question.user_id)
 
-    # user_id check
-    if get_user(db=db, user_id=question.user_id) is None:
-        raise HTTPException(status_code=404, detail="Non Existent user_id")
-
-    # is_delete check
-    elif user.is_delete:
-        raise HTTPException(status_code=404, detail="Deleted User_ID")
+    # get_user 안에 user_id, is_delete 체크하는 코드가 있습니다
+    user_check = get_user(db=db, user_id=question.user_id)
 
     # QuestionType check
     if QuestionType.check_vaild_question_type(question.type):
