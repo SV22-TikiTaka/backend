@@ -11,7 +11,7 @@ import schemas, crud
 
 metadata = MetaData()
 word_limit = {"User_name_limit": 30, "Question_content_limit": 40, "Comment_content_limit": 100,
-              "Vote_option_limit": 10}
+              "Vote_content_limit":20, "Vote_option_limit": 10, "Min_option_count": 2, "Max_option_count": 4}
 
 
 class User(Base):

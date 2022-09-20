@@ -290,7 +290,7 @@ def create_question(db: Session, question: schemas.QuestionCreate):
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
 
-    if len(question.content) > 40:  # content 길이 검사
+    if len(question.content) > models.word_limit["Question_content_limit"]:  # content 길이 검사
         raise HTTPException(status_code=404, detail="글자수 초과")
 
     db.add(db_question)
@@ -305,7 +305,7 @@ def create_vote_question(db: Session, vote_question: schemas.BaseVote):
 
     db_question = models.Question(vote_question, 1) #vote 생성자 선택을 위한 인자 1
 
-    if len(vote_question.content) > 40:  # content 길이 검사
+    if len(vote_question.content) > models.word_limit["Vote_content_limit"]:  # content 길이 검사
         raise HTTPException(status_code=404, detail="글자수 초과")
 
     db.add(db_question)

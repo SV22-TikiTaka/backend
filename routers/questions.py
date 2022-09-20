@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import schemas, crud
+import schemas, crud, models
 from database import get_db
 
 
@@ -41,13 +41,13 @@ def delete_question(question_id: int, db: Session=Depends(get_db)):
 @router.post('/vote/', status_code=201)
 def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Depends(get_db)):
     # 글자수 제한 검사
-    if len(vote_with_option.content) > 20:
+    if len(vote_with_option.content) > models.word_limit["Vote_content_limit"]:
         raise HTTPException(status_code=415, detail="exceeded length limit - vote question: 20")
     for op in vote_with_option.option:
-        if len(op) > 10:
+        if len(op) > models.word_limit["Vote_option_limit"]:
             raise HTTPException(status_code=415, detail="exceeded length limit - vote option: 10")
 
-    if not 2 <= len(vote_with_option.option) <= 4:
+    if not models.word_limit["Min_option_count"] <= len(vote_with_option.option) <= models.word_limit["Max_option_count"]:
         raise HTTPException(status_code=415, detail="number of options out of range")
 
     vote_question = schemas.BaseVote(content=vote_with_option.content, user_id=vote_with_option.user_id)
@@ -70,7 +70,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
         raise HTTPException(status_code=415, detail="unsupported comment type")
 
     # 글자수 제한 검사
-    if len(question.content) > 40:
+    if len(question.content) > models.word_limit["Question_content_limit"]:
         raise HTTPException(status_code=415, detail="exceeded length limit - question: 40")
 
     return crud.create_question(db, question=question)
