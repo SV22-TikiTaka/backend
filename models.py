@@ -64,8 +64,8 @@ class Question(Base):
     def __init__(self, question: schemas.QuestionCreate):
         self.content = question.content
         self.user_id = question.user_id
-        self.type = crud.QuestionType.vote
-        self.comment_type = crud.CommentType.vote
+        self.type = question.type
+        self.comment_type = question.comment_type
         self.expired = False
         self.is_deleted = False
         self.created_at = Timestamp.now()
