@@ -39,6 +39,7 @@ def delete_question(question_id: int, db: Session=Depends(get_db)):
 # B-10
 # 투표 질문 저장
 @router.post('/vote/', status_code=201)
+
 def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Depends(get_db)):
     # 글자수 제한 검사
     if len(vote_with_option.content) > models.word_limit["Vote_content_limit"]:
@@ -61,6 +62,7 @@ def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Dep
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @router.post('/', response_model=schemas.Question, status_code=201)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
+
     # 타입 검사
     if not crud.QuestionType.check_vaild_question_type(question.type):
         raise HTTPException(status_code=415, detail="unsupported question type")

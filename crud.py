@@ -10,6 +10,7 @@ from enum import Enum, auto
 
 import models, schemas
 
+
 # StrEnum을 상속받으면 CommentType.text 가 그대로 "text" 가 됨
 class StrEnum(str, Enum):
     def _generate_next_value_(name, start, count, last_values):
@@ -20,6 +21,7 @@ class StrEnum(str, Enum):
 
     def __str__(self):
         return self.name
+
 
 class CommentType(StrEnum):
     ''' 질문의 답변타입 열겨형 변수 '''
@@ -34,6 +36,7 @@ class CommentType(StrEnum):
             return CommentType[type_name] != None
         except:
             return False
+
     def compare_two_type(input_type: str, check_type: str):
         ''' input_type이 check_type이나 anything이면 true 아니면 FALSE '''
         try:
@@ -41,18 +44,19 @@ class CommentType(StrEnum):
         except:
             return False
 
+
 class QuestionType(StrEnum):
     ''' 질문타입 열겨형 변수 '''
     vote = auto()
     challenge = auto()
     normal = auto()
+
     def check_vaild_question_type(type_name: str):
         ''' 입력받은 타입이 있는 타입이면 TRUE, 아니면 FALSE '''
         try:
             return QuestionType[type_name] != None
         except:
             return False
-
 
 
 def insert_questions(db: Session):
@@ -86,14 +90,15 @@ def get_comment(db: Session, comment_id: int) -> models.Comment | None:
 
 
 def get_valid_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
-    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
+    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(
+        models.Question.is_deleted == False) \
         .filter(models.Question.type != QuestionType.vote).filter(models.Question.expired == False).all()
 
 
 def get_valid_votequestions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
-    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(models.Question.is_deleted == False) \
+    return db.query(models.Question).filter(models.Question.user_id == user_id).filter(
+        models.Question.is_deleted == False) \
         .filter(models.Question.type == QuestionType.vote).filter(models.Question.expired == False).all()
-
 
 
 def get_expired_questions_by_userid(db: Session, user_id: int) -> List[models.Question] | None:
@@ -102,7 +107,11 @@ def get_expired_questions_by_userid(db: Session, user_id: int) -> List[models.Qu
 
 
 def get_valid_comments(db: Session, user_id: int, type: str) -> List[models.Comment] | None:
+    # user_id check
     valid_questions = get_valid_questions_by_userid(db, user_id)
+    if len(valid_questions) < 1:
+        raise HTTPException(status_code=404, detail="Non existent user_id")
+
     comments = []
     for q in valid_questions:
         if (datetime.now() - q.created_at).days >= 1:
@@ -114,7 +123,6 @@ def get_valid_comments(db: Session, user_id: int, type: str) -> List[models.Comm
         db_comments = get_comments_by_questionid(db, question_id=q.id)
         comments += [c for c in db_comments if c.type == type]
     return comments
-
 
 # def get_valid_soundcomments(db: Session, user_id: int):
 #     valid_questions = get_valid_questions_by_userid(db, user_id)
@@ -151,10 +159,10 @@ def get_valid_questions(db: Session, question_id: int):
 
     if question.expired:  # question의 expired가 True면
         raise HTTPException(status_code=404, detail="expired Link")  # 예외발생
-    elif (datetime.now() - question.created_at).seconds / 3600 <= 24: # 24시간이 안 지났으면
-        return question # 질문 반환
-    else: # 24시간이 지났으면
-        question.expired = True # question의 expired를 False로 변경
+    elif (datetime.now() - question.created_at).seconds / 3600 <= 24:  # 24시간이 안 지났으면
+        return question  # 질문 반환
+    else:  # 24시간이 지났으면
+        question.expired = True  # question의 expired를 False로 변경
         db.add(question)
         db.commit()
         db.refresh(question)
@@ -186,7 +194,7 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User | None:
 def update_user(db: Session, user: schemas.UserCreate):
     db_user = db.query(models.User).filter_by(insta_id=user.insta_id).first()
     if db_user == None:
-        return -1 # 'insta_id_not_found'
+        return -1  # 'insta_id_not_found'
     db_user.username = user.username
     db_user.full_name = user.full_name
     db_user.follower = user.follower
@@ -282,10 +290,11 @@ def delete_comment(db: Session, comment_id: int):
 
 # 유효성 검사 추가
 def create_question(db: Session, question: schemas.QuestionCreate):
-    if get_user(db=db, user_id=question.user_id) is None:  # user_id 존재여부 검사
-        raise HTTPException(status_code=404, detail="Non existent ID")
+    # get_user 안에 user_id, is_delete 체크하는 코드가 있습니다
+    user_check = get_user(db=db, user_id=question.user_id)
 
-    if(QuestionType.check_vaild_question_type(question.type)):
+    # QuestionType check
+    if QuestionType.check_vaild_question_type(question.type):
         db_question = models.Question(question)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
