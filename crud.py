@@ -280,15 +280,17 @@ def delete_comment(db: Session, comment_id: int):
 
 # 유효성 검사 추가
 def create_question(db: Session, question: schemas.QuestionCreate):
-    if get_user(db=db, user_id=question.user_id) is None:  # user_id 존재여부 검사
-        raise HTTPException(status_code=404, detail="Non existent ID")
 
-    if(QuestionType.check_vaild_question_type(question.type)):
+    # get_user 안에 user_id, is_delete 체크하는 코드가 있습니다
+    user_check = get_user(db=db, user_id=question.user_id)
+
+    # QuestionType check
+    if QuestionType.check_vaild_question_type(question.type):
         db_question = models.Question(question)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
 
-    if len(question.content) >= 40:  # content 길이 검사
+    if len(question.content) >= models.word_limit["Question_content_limit"]:  # content 길이 검사
         raise HTTPException(status_code=404, detail="글자수 초과")
 
     db.add(db_question)
