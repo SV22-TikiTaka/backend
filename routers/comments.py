@@ -67,16 +67,17 @@ def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 투표답변들을 반환
 @router.get('/users/{user_id}/vote', response_model=List[schemas.VoteResult], status_code=200)
 def show_valid_vote_options(user_id: int, db: Session = Depends(get_db)):
+
+    # user_id가 존재하는지 check
+    crud.get_user(db=db, user_id=user_id)
     vote_questions = crud.get_valid_votequestions_by_userid(db, user_id=user_id)
-    # user_id check
+    # 해당 user_id에 vote_question이 없는 경우
     if len(vote_questions) < 1:
-        raise HTTPException(status_code=404, detail="Non Existent user_id")
+        raise HTTPException(status_code=404, detail="This id has no vote_questions")
 
     voteResults = []
     for question in vote_questions:
         vote_options = crud.get_vote_options(db, question.id)
-        if len(vote_options) < 1:
-            raise HTTPException(status_code=404, detail="Empty vote option")
         vote_option_contents = [vote_options[i].content for i in range(len(vote_options))]
         vote_count = [vote_options[i].count for i in range(len(vote_options))]
 
