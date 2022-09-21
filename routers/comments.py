@@ -169,14 +169,15 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
         os.mkdir('./temp')
 
     # 클라이언트에서 보낸 음성 파일 저장
-    file_path = "temp/" + str(comment.id) + ".wav"
-    with open(file_path, "wb") as buffer:
+    file_path = "temp/" + str(comment.id)
+    with open(f"{file_path}.wav", "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     # 음성 변조 후, s3에 저장
-    voice_alteration.voice_alteration(file_path, comment.id)
-    upload_file(file_path, str(comment.id))
-    os.remove(file_path)
+    voice_alteration.voice_alteration(f"{file_path}.wav", comment.id)
+    upload_file(f"{file_path}.mp4", str(comment.id))
+    os.remove(f"{file_path}.wav")
+    os.remove(f"{file_path}.mp4")
 
     # url update
     comment = crud.update_sound_comment(db, comment_id=comment.id,
