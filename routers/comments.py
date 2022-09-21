@@ -8,6 +8,7 @@ from fastapi import APIRouter, UploadFile, Form, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import sys, os
+
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import schemas, crud, voice_alteration
 from database import get_db
@@ -66,7 +67,14 @@ def show_valid_sound_comments(user_id: int, db: Session = Depends(get_db)):
 # user_id를 path variable로 받아 해당 user의 유효한 질문들의 투표답변들을 반환
 @router.get('/users/{user_id}/vote', response_model=List[schemas.VoteResult], status_code=200)
 def show_valid_vote_options(user_id: int, db: Session = Depends(get_db)):
+
+    # user_id가 존재하는지 check
+    crud.get_user(db=db, user_id=user_id)
     vote_questions = crud.get_valid_votequestions_by_userid(db, user_id=user_id)
+    # 해당 user_id에 vote_question이 없는 경우
+    if len(vote_questions) < 1:
+        raise HTTPException(status_code=404, detail="This id has no vote_questions")
+
     voteResults = []
     for question in vote_questions:
         vote_options = crud.get_vote_options(db, question.id)
