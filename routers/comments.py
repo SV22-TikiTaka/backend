@@ -32,7 +32,7 @@ def upload_file(location, file):
             location,
             os.getenv('AWS_S3_BUCKET_NAME'),
             file,
-            ExtraArgs={'ContentType': 'audio/wav'}
+            ExtraArgs={'ContentType': 'video/mpeg'}
         )
     except ClientError as e:
         print(f'Credential error => {e}')
