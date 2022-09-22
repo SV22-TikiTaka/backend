@@ -32,7 +32,7 @@ def upload_file(location, file):
             location,
             os.getenv('AWS_S3_BUCKET_NAME'),
             file,
-            ExtraArgs={'ContentType': 'video/mpeg'}
+            ExtraArgs={'ContentType': 'video/mp4'}
         )
     except ClientError as e:
         print(f'Credential error => {e}')
@@ -175,7 +175,7 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
 
     # 음성 변조 후, s3에 저장
     voice_alteration.voice_alteration(f"{file_path}.wav", comment.id)
-    upload_file(f"{file_path}.mp4", str(comment.id))
+    upload_file(f"{file_path}.mp4", f"{str(comment.id)}.mp4")
     os.remove(f"{file_path}.wav")
     os.remove(f"{file_path}.mp4")
 
