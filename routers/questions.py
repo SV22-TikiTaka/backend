@@ -18,15 +18,13 @@ router = APIRouter(
 
 # B-4
 # 원하는 type을 query parameter로 받아 해당 type인 질문을 랜덤으로 반환
-@router.get('/random', response_model=schemas.RandomQuestion, status_code=200)
+@router.get('/random', response_model=List[schemas.RandomQuestion], status_code=200)
 def show_random_question(type: str, db: Session = Depends(get_db)):
     questions = crud.get_random_question(db, question_type=type)
     if len(questions) == 0:
         raise HTTPException(status_code=404, detail="questions are not found")
 
-    random.seed()
-    idx = random.randint(0, len(questions) - 1)
-    return questions[idx]
+    return questions
 
 
 # F-2
