@@ -4,6 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+import numpy as np
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import schemas, crud, models
@@ -20,7 +21,7 @@ router = APIRouter(
 # 원하는 type을 query parameter로 받아 해당 type인 질문을 랜덤으로 반환
 @router.get('/random', response_model=schemas.RandomQuestion, status_code=200)
 def show_random_question(type: str, db: Session = Depends(get_db)):
-    questions = crud.get_random_question(db, question_type=type)
+    questions = np.array(crud.get_random_question(db, question_type=type))
     if len(questions) == 0:
         raise HTTPException(status_code=404, detail="questions are not found")
 
