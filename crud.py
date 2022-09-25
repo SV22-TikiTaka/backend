@@ -295,7 +295,7 @@ def create_question(db: Session, question: schemas.QuestionCreate):
 
     # QuestionType check
     if QuestionType.check_vaild_question_type(question.type):
-        db_question = models.Question(question)
+        db_question = models.Question(question, False)
     else:
         raise HTTPException(status_code=415, detail="unsupported question type")
 
@@ -312,7 +312,7 @@ def create_vote_question(db: Session, vote_question: schemas.BaseVote):
     if get_user(db=db, user_id=vote_question.user_id) is None:  # user_id 존재여부 검사
         raise HTTPException(status_code=404, detail="Non existent ID")
 
-    db_question = models.Question(vote_question, 1) #vote 생성자 선택을 위한 인자 1
+    db_question = models.Question(vote_question, True) #vote 생성자 선택을 위한 인자 1
 
     if len(vote_question.content) > models.word_limit["Vote_content_limit"]:  # content 길이 검사
         raise HTTPException(status_code=404, detail="글자수 초과")

@@ -61,25 +61,23 @@ class Question(Base):
     question_comment = relationship("Comment")
     question_vote_option = relationship("VoteOption")
 
-    def __init__(self, question: schemas.QuestionCreate):
-        self.content = question.content
-        self.user_id = question.user_id
-        self.type = question.type
-        self.comment_type = question.comment_type
-        self.expired = False
-        self.is_deleted = False
-        self.created_at = Timestamp.now()
-        self.updated_at = self.created_at
 
-    def __init__(self, question: schemas.VoteCreate, is_vote: int):
+    def __init__(self, question: schemas.VoteCreate, is_vote: bool):
+        #공통
         self.content = question.content
         self.user_id = question.user_id
-        self.type = crud.QuestionType.vote
-        self.comment_type = crud.CommentType.vote
         self.expired = False
         self.is_deleted = False
         self.created_at = Timestamp.now()
         self.updated_at = self.created_at
+        
+        if is_vote:
+            self.type = crud.QuestionType.vote
+            self.comment_type = crud.CommentType.vote
+        else:
+            self.type = question.type
+            self.comment_type = question.comment_type
+
 
 
 class Comment(Base):
