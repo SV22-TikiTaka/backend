@@ -63,7 +63,7 @@ def insert_questions(db: Session):
     file = open("questions.txt", "r", encoding="utf-8")
     lines = file.readlines()
     for idx, line in enumerate(lines):
-        line = line.split(",")
+        line = line.split("|")
         row = models.RandomQuestion(content=line[0], type=line[1].strip())
         db.add(row)
     db.commit()
