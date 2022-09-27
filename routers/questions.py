@@ -93,13 +93,33 @@ def get_question(question_id: int,  db: Session = Depends(get_db)):
 
 # D-6
 # user_id를 path variable로 받아서 user에 해당하는 질문들을 반환
-@router.get('/history/{user_id}', response_model=List[schemas.Question], status_code=200)
+@router.get('/history/{user_id}', response_model=List[schemas.QuestionWithAnswer], status_code=200)
 def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
+    response = []
+    
     # user 존재 확인
     crud.get_user(db, user_id=user_id)
-
     questions = crud.get_expired_questions_by_userid(db, user_id=user_id)
-    return questions
+
+    for q in questions:
+        #투표 외 질문들
+        comments = crud.get_comments_by_questionid(db, q.id)
+        answers = []
+        for c in comments: 
+            answer = {"id": c.id, "val": c.content}
+            answers.append(answer)
+        question_with_answer = schemas.QuestionWithAnswer(question=q.content, type=q.type, answer=answer)
+        response.append(question_with_answer)
+        
+        #투표 질문들
+        vote_options = crud.get_vote_options(db, q.id)
+        for v in vote_options:
+            answer = {"id": v.id, "val": v.content, "count": v.count}
+            answers.append(answer)
+        vote_question_with_answer = schemas.QuestionWithAnswer(question=q.content, type=q.type, answer=answer)
+        response.append(vote_question_with_answer)
+
+    return response
 
 
 # C-2
