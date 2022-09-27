@@ -9,3 +9,4 @@ venv/
 # 인증서 파일
 cert.pem
 key.pem
+.DS_Store
