@@ -181,5 +181,5 @@ def create_sound_comment(file: UploadFile, question_id: int = Form(), db: Sessio
 
     # url update
     comment = crud.update_sound_comment(db, comment_id=comment.id,
-                                        content=f"https://tikitaka-s3.s3.ap-northeast-2.amazonaws.com/{comment.id}")
+                                        content=f"https://tikitaka-s3.s3.ap-northeast-2.amazonaws.com/{comment.id}.mp4")
     return comment
