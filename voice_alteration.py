@@ -6,7 +6,9 @@ import os
 
 
 def voice_alteration(filepath: str, comment_id: int):
-    sound = AudioSegment.from_file(filepath, format=filepath[-3:])
+    sound = AudioSegment.from_file(filepath, "webm")
+    sound.export(f"temp/{comment_id}.wav", format="wav")
+    sound = AudioSegment.from_file(f"temp/{comment_id}.wav", format=filepath[-3:])
 
     octaves = 0.7
     new_sample_rate = int(sound.frame_rate * (1.8 ** octaves))
