@@ -2,7 +2,7 @@
 # 테이블의 타입을 설정하는 파일
 
 from sqlite3 import Timestamp
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel  # 객체 타입설정
 
 
@@ -121,6 +121,14 @@ class VoteResult(BaseModel):
     count: List[int]
     created_at: Timestamp  # question 생성시간
     updated_at: Timestamp  # 마지막 투표 시간
+
+    class Config:
+        orm_mode = True
+
+class QuestionWithAnswer(BaseModel):
+    question: str
+    type: str
+    answer: List[Dict]
 
     class Config:
         orm_mode = True
