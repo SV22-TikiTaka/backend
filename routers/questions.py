@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import sys, os
+
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import schemas, crud, models
 from database import get_db
-
 
 router = APIRouter(
     prefix="/api/v1/questions",
@@ -30,14 +30,13 @@ def show_random_question(type: str, db: Session = Depends(get_db)):
 # F-2
 # question 데이터 soft 삭제
 @router.delete('/{question_id}', status_code=204)
-def delete_question(question_id: int, db: Session=Depends(get_db)):
+def delete_question(question_id: int, db: Session = Depends(get_db)):
     return crud.delete_question_by_question_id(db, question_id)
 
 
 # B-10
 # 투표 질문 저장
 @router.post('/vote/', status_code=201)
-
 def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Depends(get_db)):
     # 글자수 제한 검사
     if len(vote_with_option.content) > models.word_limit["Question_content_limit"]:
@@ -51,7 +50,8 @@ def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Dep
         if len(op) > models.word_limit["Vote_option_limit"]:
             raise HTTPException(status_code=415, detail="exceeded length limit - vote option")
 
-    if not models.word_limit["Min_option_count"] <= len(vote_with_option.option) <= models.word_limit["Max_option_count"]:
+    if not models.word_limit["Min_option_count"] <= len(vote_with_option.option) <= models.word_limit[
+        "Max_option_count"]:
         raise HTTPException(status_code=415, detail="number of options out of range")
 
     vote_question = schemas.BaseVote(content=vote_with_option.content, user_id=vote_with_option.user_id)
@@ -65,7 +65,6 @@ def create_vote_question(vote_with_option: schemas.VoteCreate, db: Session = Dep
 # question 생성에 필요한 정보를 보내면 DB에 저장
 @router.post('/', response_model=schemas.Question, status_code=201)
 def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_db)):
-
     # 타입 검사
     if not crud.QuestionType.check_vaild_question_type(question.type):
         raise HTTPException(status_code=415, detail="unsupported question type")
@@ -84,7 +83,7 @@ def create_question(question: schemas.QuestionCreate, db: Session = Depends(get_
 # D-10
 # inbox에서 question 상세보기
 @router.get('/{question_id}', response_model=schemas.Question, status_code=200)
-def get_question(question_id: int,  db: Session = Depends(get_db)):
+def get_question(question_id: int, db: Session = Depends(get_db)):
     question = crud.get_question(db, question_id=question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="question is not found")
@@ -96,28 +95,28 @@ def get_question(question_id: int,  db: Session = Depends(get_db)):
 @router.get('/history/{user_id}', response_model=List[schemas.QuestionWithAnswer], status_code=200)
 def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
     response = []
-    
     # user 존재 확인
     crud.get_user(db, user_id=user_id)
-    questions = crud.get_expired_questions_by_userid(db, user_id=user_id)
+    questions = crud.get_expired_questions_by_userid(db=db, user_id=user_id)
 
     for q in questions:
-        #투표 외 질문들
-        comments = crud.get_comments_by_questionid(db, q.id)
         answers = []
-        for c in comments: 
-            answer = {"id": c.id, "val": c.content}
-            answers.append(answer)
-        question_with_answer = schemas.QuestionWithAnswer(question=q.content, type=q.type, answer=answer)
-        response.append(question_with_answer)
-        
-        #투표 질문들
-        vote_options = crud.get_vote_options(db, q.id)
-        for v in vote_options:
-            answer = {"id": v.id, "val": v.content, "count": v.count}
-            answers.append(answer)
-        vote_question_with_answer = schemas.QuestionWithAnswer(question=q.content, type=q.type, answer=answer)
-        response.append(vote_question_with_answer)
+        # 투표 외 질문들
+        if q.type == "normal":
+            comments = crud.get_comments_by_questionid(db, q.id)
+            for c in comments:
+                answer = {"id": c.id, "val": c.content}
+                answers.append(answer)
+            question_with_answer = schemas.QuestionWithAnswer(question=q.content, type=q.type, answer=answers)
+            response.append(question_with_answer)
+
+        else:
+            vote_options = crud.get_vote_options(db, q.id)
+            for v in vote_options:
+                answer = {"id": v.id, "val": v.content, "count": v.count}
+                answers.append(answer)
+            vote_question_with_answer = schemas.QuestionWithAnswer(question=q.content, type=q.type, answer=answers)
+            response.append(vote_question_with_answer)
 
     return response
 
@@ -127,6 +126,3 @@ def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
 @router.get('/url', response_model=schemas.Question)
 def get_question_from_url(question_id: int, db: Session = Depends(get_db)):
     return crud.get_valid_questions(db=db, question_id=question_id)
-
-
-
