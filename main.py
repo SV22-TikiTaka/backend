@@ -73,18 +73,16 @@ def get_refresh_token(long_access_token: str = Header(default=None)):
 
 
 # A-8
-# 인스타 연동 시 리디렉션되는 API, 발행된 code로 장기 토큰을 발급한다.
-# 프론트에서 발급 받은 토큰 저장 후 user_info_change_by_access_token 호출해야함
-# 프론트에서 직접 호출할 일이 없으므로 문서에서 숨김
-@app.get("/api/v1/insta/redirection", include_in_schema=False)
-def get_insta_code(code=None, error=None, error_description=None):
+# 쿼리스트링으로 코드를 넘겨주면 반환값으로 토큰을 준다.
+@app.get("/api/v1/insta/get-token-by-code/", status_code=200)
+def get_insta_token_by_code(code: str):
     # 인증 실패 시
-    if error is not None:
-        raise HTTPException(status_code=421, detail=error_description)
+    # if error is not None:
+        # raise HTTPException(status_code=421, detail=error_description)
         # 적절한 페이지로 이동시키기
     # 코드가 없으면
-    if code is None:
-        raise HTTPException(status_code=421, detail="code is not found")
+    # if code is None:
+        # raise HTTPException(status_code=421, detail="code is not found")
     # 단기 실행 토큰 발급
     short_token = insta.get_short_token(code)
     # 장기 실행 토큰 발급
