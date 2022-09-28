@@ -123,6 +123,6 @@ def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
 
 # C-2
 # 링크 접속 시 질문 내용 반환
-@router.get('/url', response_model=schemas.Question)
+@router.get('/url/', response_model=schemas.Question)
 def get_question_from_url(question_id: int, db: Session = Depends(get_db)):
     return crud.get_valid_questions(db=db, question_id=question_id)

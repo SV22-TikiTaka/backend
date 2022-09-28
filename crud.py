@@ -156,10 +156,9 @@ def get_valid_questions(db: Session, question_id: int):
     question = get_question(db=db, question_id=question_id)
     if question is None:
         raise HTTPException(status_code=404, detail="Question is not found")
-
     if question.expired:  # question의 expired가 True면
         raise HTTPException(status_code=404, detail="expired Link")  # 예외발생
-    elif (datetime.now() - question.created_at).seconds / 3600 <= 24:  # 24시간이 안 지났으면
+    elif (datetime.now() - question.created_at).days < 1:  # 24시간이 안 지났으면
         return question  # 질문 반환
     else:  # 24시간이 지났으면
         question.expired = True  # question의 expired를 False로 변경
