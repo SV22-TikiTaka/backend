@@ -5,13 +5,11 @@ from fastapi import HTTPException
 
 # 환경변수 로드
 load_dotenv()
-
 # 인스타 로그인 및 프로필 정보 가져오기 및 유저 관련 API
 app_id = os.getenv('INSTA_APP_ID')
 secret_id = os.getenv('INSTA_APP_SECRET_ID')
-redirect_url = "https://localhost:8000/api/v1/insta/redirection"
-authorize_url = f"https://api.instagram.com/oauth/authorize?client_id=\
-    {app_id}&redirect_uri={redirect_url}&scope=user_profile,user_media&response_type=code"
+redirect_url = "https://letstikitaka.com/redirect"
+# authorize_url = f"https://api.instagram.com/oauth/authorize?client_id={app_id}&redirect_uri={redirect_url}&scope=user_profile,user_media&response_type=code"
 get_short_token_url = "https://api.instagram.com/oauth/access_token"
 get_user_name_url = "https://graph.instagram.com/me?fields=username&access_token="
 get_user_info_url = "https://i.instagram.com/api/v1/users/web_profile_info/?username="
