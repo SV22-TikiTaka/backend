@@ -52,9 +52,9 @@ def main():
 # A-1
 # 인스타그램 로그인 페이지로 이동한다.
 # 앱 접속 시 프론트에 유효한 토큰이 없다면 인스타 연동 페이지로 이동
-@app.get("/api/v1/authorize")
-def go_to_authorize_page():
-    return RedirectResponse(url=insta.authorize_url)
+# @app.get("/api/v1/authorize")
+# def go_to_authorize_page():
+#     return RedirectResponse(url=insta.authorize_url)
 
 
 # A-2
@@ -65,10 +65,11 @@ def get_refresh_token(long_access_token: str = Header(default=None)):
     res = insta.get_refresh_token(long_access_token=long_access_token)
     # 토큰이 만료되었다면
     if res == -1:
-        go_to_authorize_page()
+        return -1;
 
     elif res['expires_in'] < 30:
-        go_to_authorize_page()
+        return -1;
+
     else: return res
 
 
