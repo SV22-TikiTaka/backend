@@ -126,3 +126,8 @@ def show_expired_questions(user_id: int, db: Session = Depends(get_db)):
 @router.get('/url/', response_model=schemas.Question)
 def get_question_from_url(question_id: int, db: Session = Depends(get_db)):
     return crud.get_valid_questions(db=db, question_id=question_id)
+
+
+@router.get('/vote_options/', response_model=List[schemas.VoteOption], status_code=200)
+def get_vote_option_by_question_id(question_id: int, db: Session = Depends(get_db)):
+    return crud.get_vote_options(db=db, question_id=question_id)
