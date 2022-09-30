@@ -89,3 +89,7 @@ def get_insta_token_by_code(code: str):
     # 장기 실행 토큰 발급
     # {access_token: 'access_token', token_type: 'token_type', expires_in: 5184000}
     return insta.get_long_token(short_token)
+
+@app.get("/api/v1/insta/get-long-token", status_code=200)
+def get_insta_token_by_code(short_token: str = Header(default=None)):
+    return insta.get_long_token(short_token)
